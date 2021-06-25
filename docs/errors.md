@@ -40,6 +40,7 @@ All errors are derived from the `MongoError` class which should **never** be ins
 
 The base class from which all errors in the Node driver subclass. `MongoError` should **never** be be directly instantiated.
 ![(MongoError hierarchy tree)](charts/imgs/MongoError.svg)
+
 Children of `MongoError` include:
 
 - [`MongoDriverError`](#MongoDriverError)
@@ -186,56 +187,56 @@ The test plan consists of a series of prose tests. As numerous errors are being 
 
 ## `MongoLogicError`
 
-### `MongoInvalidArgumentError`
+#### `MongoInvalidArgumentError`
 
 - Create a `MongoClient` object and supply a number in place of the connection string when calling `.connect()`
   - Assert that `MongoInvalidArgumentError` is thrown.
 
-### `MongoClientInstantiationError`
+#### `MongoClientInstantiationError`
 
 - Create a `MongoClient` object and supply `"error"` as the connection string.
   - Assert that `MongoClientInstantiationError` is thrown.
 
-### `MongoMissingCredentialsError`
+#### `MongoMissingCredentialsError`
 
 - Fail to provide credentials when authenticating with the x509 mechanism.
   - Assert that `MongoMissingCredentialsError` is thrown.
 
 ## `MongoRuntimeError`
 
-### `MongoClientNotConnectedError`
+#### `MongoClientNotConnectedError`
 
 - Attempt to access a database without establishing a connection to a MongoDB server.
   - Assert that `MongoClientNotConnectedError` is thrown.
 
-### `MongoServerClosedError`
+#### `MongoServerClosedError`
 
 - Attempt to execute a query against a server that has closed.
   - Assert that `MongoServerClosedError` is thrown.
 
-### `MongoStreamClosedError`
+#### `MongoStreamClosedError`
 
 - Attempt to execute `tryNext()` on a `ChangeStream` object that is closed.
   - Assert that `MongoStreamClosedError` is thrown.
 
-### `MongoTopologyClosedError`
+#### `MongoTopologyClosedError`
 
 - Attempt to execute `createCollection()` against a database that has been closed.
   - Assert that `MongoTopologyClosedError` is thrown.
 
-### `MongoCursorExhaustedError`
+#### `MongoCursorExhaustedError`
 
 - Attempt to continue reading a cursor after it has reached the end of the batch.
   - Assert that `MongoCursorExhaustedError` is thrown.
 
-### `MongoIOError`
+#### `MongoIOError`
 
 - Attempt to read from a file that does not exist.
   - Assert that `MongoIOError` is thrown.
 
 ## `MongoNetworkError`
 
-### `MongoNetworkTimeoutError`
+#### `MongoNetworkTimeoutError`
 
 - Create a `MongoClient` object and set the `connectTimeoutMS` option to 1.
   - Assert that a `MongoNetworkTimeoutError` is thrown.
