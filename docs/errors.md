@@ -49,7 +49,7 @@ Children of `MongoLogicError` include:
     * Thrown when a user supplies a poorly-formatted connection string to the MongoClient constructor.
 
 * #### `MongoMissingCredentialsError`
-    * Thrown when a user fails to provide authentication credentials before attempting to connect to the server.
+    * Thrown when a user fails to provide authentication credentials before attempting to connect to the mongo server.
 
 * #### `MongoDependencyError`
     * Thrown when a required module or dependency is not present.
