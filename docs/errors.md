@@ -34,11 +34,13 @@
 
 # Errors
 
-All errors are derived from the `MongoError` class which should **never** be instantiated. There are four main error classes which stem from `MongoError`: `MongoDriverError`, `MongoNetworkError`, `MongoServerError`, and `MongoSystemError`.
+All errors are derived from the `MongoError` class which should **never** be instantiated.
+There are four main error classes which stem from `MongoError`: `MongoDriverError`, `MongoNetworkError`, `MongoServerError`, and `MongoSystemError`.
 
 ## `MongoError`
 
-The base class from which all errors in the Node driver subclass. `MongoError` should **never** be be directly instantiated.
+The base class from which all errors in the Node driver subclass.
+`MongoError` should **never** be be directly instantiated.
 ![(MongoError hierarchy tree)](charts/imgs/MongoError.svg)
 
 Children of `MongoError` include:
@@ -50,12 +52,14 @@ Children of `MongoError` include:
 
 ## `MongoDriverError`
 
-This class represents errors which originate in the driver itself or in the user's use of the driver. This class should **never** be directly instantiated. Its children are the main classes of
-errors that most users will interact with: [**`MongoLogicError`**](#MongoLogicError) and [**`MongoRuntimeError`**](#MongoRuntimeError).
+This class represents errors which originate in the driver itself or in the user's use of the driver.
+This class should **never** be directly instantiated.
+Its children are the main classes of errors that most users will interact with: [**`MongoLogicError`**](#MongoLogicError) and [**`MongoRuntimeError`**](#MongoRuntimeError).
 
 ### `MongoLogicError`
 
-This class represents errors which originate from misuse of the driver API and will generally be thrown before making contact with the server. This class should **never** be directly instantiated.
+This class represents errors which originate from misuse of the driver API and will generally be thrown before making contact with the server.
+This class should **never** be directly instantiated.
 ![(MongoLogicError hierarchy tree)](charts/imgs/MongoLogicError.svg)
 Children of `MongoLogicError` include:
 
@@ -80,7 +84,8 @@ Children of `MongoLogicError` include:
 
 ### `MongoRuntimeError`
 
-This class represents errors which occur when the driver encounters unexpected input or reaches an unexpected/invalid internal state. This class should **never** be directly instantiated.
+This class represents errors which occur when the driver encounters unexpected input or reaches an unexpected/invalid internal state.
+This class should **never** be directly instantiated.
 
 _MongoRuntimeError children (pt 1)_
 ![(MongoRuntimeError hierarchy tree part 1)](charts/imgs/MongoRuntimeError_0.svg)
@@ -180,7 +185,9 @@ These are errors which originate from faulty environment setup.
 
 # Test Plan
 
-The test plan consists of a series of prose tests. As numerous errors are being introduced, select classes will be tested. The classes to be tested will be selected based on two characteristics:
+The test plan consists of a series of prose tests.
+As numerous errors are being introduced, select classes will be tested.
+The classes to be tested will be selected based on two characteristics:
 
 1. The **frequency** of which users may encounter this error. Errors that users will likely catch in their code, including but not limited to `MongoIOError` and `MongoNetworkTimeoutError`, are part of the test plan. _Note:_ Error classes that should never be instantiated, such as `MongoLogicError` and `MongoRuntimeError`, will not be tested as the user should not encounter them.
 2. The **scope** of the error. Errors that tackle a large subset of issues, including but not limited to `MongoServerError` and `MongoSystemError`, will _not_ be part of the test plan.
@@ -240,4 +247,3 @@ The test plan consists of a series of prose tests. As numerous errors are being 
 
 - Create a `MongoClient` object and set the `connectTimeoutMS` option to 1.
   - Assert that a `MongoNetworkTimeoutError` is thrown.
-
