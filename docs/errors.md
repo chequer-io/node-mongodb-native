@@ -23,7 +23,7 @@
     - [`MongoClientInstantiationError`](#MongoClientInstantiationError-1)
     - [`MongoMissingCredentialsError`](#MongoMissingCredentialsError-1)
   - [`MongoRuntimeError`](#MongoRuntimeError-1)
-    - [`MongoClientNotConnectedError`](#MongoClientNotConnectedError-1)
+    - [`MongoNotConnectedError`](#MongoNotConnectedError-1)
     - [`MongoServerClosedError`](#MongoServerClosedError-1)
     - [`MongoStreamClosedError`](#MongoStreamClosedError-1)
     - [`MongoTopologyClosedError`](#MongoTopologyClosedError-1)
@@ -69,7 +69,7 @@ Children of `MongoLogicError` include:
 
 - #### `MongoCompatibilityError`
 
-  - Thrown when a feature that is not enabled or allowed for the current configuration is used.
+  - Thrown when a feature that is not enabled or allowed for the current server configuration is used.
 
 - #### `MongoClientInstantiationError`
 
@@ -79,7 +79,7 @@ Children of `MongoLogicError` include:
 
   - Thrown when a user fails to provide authentication credentials before attempting to connect to the mongo server.
 
-- #### `MongoDependencyError`
+- #### `MongoMissingDependencyError`
   - Thrown when a required module or dependency is not present.
 
 ### `MongoRuntimeError`
@@ -106,11 +106,11 @@ Children of `MongoRuntimeError` include:
 
   - Thrown when the user makes a mistake in the usage of transactions (e.g.: attempting to commit a transaction with a readPreference other than primary).
 
-- #### `MongoClientNotConnectedError`
+- #### `MongoNotConnectedError`
 
   - Thrown when the user attempts to operate on the data from a client that has not been connected to a MongoDB server instance.
 
-- #### `MongoKerberosClientConnectionError`
+- #### `MongoKerberosError`
 
   - Thrown when the user attempts to authenticate via Kerberos, but fails to connect to the Kerberos client.
 
@@ -139,11 +139,13 @@ Children of `MongoRuntimeError` include:
   - Thrown when the driver fails to correctly parse otherwise properly supplied input.
 
 - #### `MongoResourceClosedError`
+
   - Thrown when there is an attempt to access a resource which has already been or will be closed/destroyed.
     - Children of this error class include:
       - **`MongoServerClosedError`**: Thrown when an attempt is made to operate on a closed server.
       - **`MongoStreamClosedError`**: Thrown when an attempt is made to operate on a closed stream.
       - **`MongoTopologyClosedError`**: Thrown when an attempt is made to operate on a dropped, or otherwise unavailable, database.
+
 - #### `MongoCursorError`
 
   - Thrown when the user incorrectly uses a cursor object.
@@ -152,11 +154,13 @@ Children of `MongoRuntimeError` include:
       - **`MongoCursorExhaustedError`**: Thrown when an attempt is made to read from a cursor that has been exhausted.
 
 - #### `MongoStreamError`
+
   - Thrown when a stream operation fails to execute.
   - Children of this error class include:
     - **`MongoChangeStreamError`**: Thrown when an error is encountered when operating on a ChangeStream.
     - **`MongoGridFSStreamError`**: Thrown when an unexpected state is reached when operating on a GridFSStream.
     - **`MongoGridFSChunkError`**: Thrown when a malformed or invalid chunk is encountered when reading from a GridFSStream.
+
 - #### `MongoBatchReExecutionError`
 
   - Thrown when a user attempts to reexecute a batch command when one of the constituent commands has failed.
@@ -166,6 +170,7 @@ Children of `MongoRuntimeError` include:
   - Thrown when the driver fails to select a server to complete an operation.
 
 - #### `MongoInvalidClassInstantiationError`
+
   - Thrown when an internal class that should not be instantiated is directly instantiated.
 
 ## `MongoNetworkError`
@@ -211,10 +216,10 @@ The classes to be tested will be selected based on two characteristics:
 
 ## `MongoRuntimeError`
 
-#### `MongoClientNotConnectedError`
+#### `MongoNotConnectedError`
 
 - Attempt to access a database without establishing a connection to a MongoDB server.
-  - Assert that `MongoClientNotConnectedError` is thrown.
+  - Assert that `MongoNotConnectedError` is thrown.
 
 #### `MongoServerClosedError`
 
