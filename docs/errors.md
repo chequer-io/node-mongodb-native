@@ -20,7 +20,6 @@
 - [Test Plan](#Test-Plan)
   - [`MongoLogicError`](#MongoLogicError-1)
     - [`MongoInvalidArgumentError`](#MongoInvalidArgumentError-1)
-    - [`MongoClientInstantiationError`](#MongoClientInstantiationError-1)
     - [`MongoMissingCredentialsError`](#MongoMissingCredentialsError-1)
   - [`MongoRuntimeError`](#MongoRuntimeError-1)
     - [`MongoNotConnectedError`](#MongoNotConnectedError-1)
@@ -28,7 +27,6 @@
     - [`MongoStreamClosedError`](#MongoStreamClosedError-1)
     - [`MongoTopologyClosedError`](#MongoTopologyClosedError-1)
     - [`MongoCursorExhaustedError`](#MongoCursorExhaustedError-1)
-    - [`MongoIOError`](#MongoIOError-1)
   - [`MongoNetworkError`](#MongoNetworkError-1)
     - [`MongoNetworkTimeoutError`](#MongoNetworkTimeoutError-1)
 
@@ -71,10 +69,6 @@ Children of `MongoLogicError` include:
 
   - Thrown when a feature that is not enabled or allowed for the current server configuration is used.
 
-- #### `MongoClientInstantiationError`
-
-  - Thrown when a user supplies a poorly-formatted connection string to the MongoClient constructor.
-
 - #### `MongoMissingCredentialsError`
 
   - Thrown when a user fails to provide authentication credentials before attempting to connect to the mongo server.
@@ -97,10 +91,6 @@ _MongoRuntimeError children (pt 3)_
 ![(MongoRuntimeError hierarchy tree part 3)](charts/imgs/MongoRuntimeError_2.svg)
 
 Children of `MongoRuntimeError` include:
-
-- #### `MongoInternalDriverError`
-
-  - Thrown when a catastrophic failure occurs in the driver.
 
 - #### `MongoTransactionError`
 
@@ -129,10 +119,6 @@ Children of `MongoRuntimeError` include:
 - #### `MongoExpiredSessionError`
 
   - Thrown when the user attempts to operate on a session that has expired or has been closed.
-
-- #### `MongoIOError`
-
-  - Thrown when the driver fails to read or write from a file.
 
 - #### `MongoParseError`
 
@@ -178,6 +164,7 @@ Children of `MongoRuntimeError` include:
 These are errors encountered at runtime which occur when the driver encounters an issue in the network which leads to an inability to connect to a mongo server instance. Children of this class include:
 
 - #### `MongoNetworkTimeoutError`
+
   - Thrown when a timeout expires in attempting to connect to the mongo server
 
 ## `MongoServerError`
@@ -203,11 +190,6 @@ The classes to be tested will be selected based on two characteristics:
 
 - Create a `MongoClient` object and supply a number in place of the connection string when calling `.connect()`
   - Assert that `MongoInvalidArgumentError` is thrown.
-
-#### `MongoClientInstantiationError`
-
-- Create a `MongoClient` object and supply `"error"` as the connection string.
-  - Assert that `MongoClientInstantiationError` is thrown.
 
 #### `MongoMissingCredentialsError`
 
@@ -240,11 +222,6 @@ The classes to be tested will be selected based on two characteristics:
 
 - Attempt to continue reading a cursor after it has reached the end of the batch.
   - Assert that `MongoCursorExhaustedError` is thrown.
-
-#### `MongoIOError`
-
-- Attempt to read from a file that does not exist.
-  - Assert that `MongoIOError` is thrown.
 
 ## `MongoNetworkError`
 
