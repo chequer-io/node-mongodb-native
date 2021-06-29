@@ -47,6 +47,9 @@ export async function runUnifiedTest(
   }
 
   let utilClient;
+  console.error('ctx.topologyType', ctx.topologyType);
+  console.error('SINGLE_MONGOS_LB_URI', SINGLE_MONGOS_LB_URI);
+  console.error('MULTI_MONGOS_LB_URI', MULTI_MONGOS_LB_URI);
   if (ctx.topologyType === uni.TopologyType.loadBalanced) {
     // In load balanced mode we require these 2 environment
     // variables to be set pointing at the load balancer

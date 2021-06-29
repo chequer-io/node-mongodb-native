@@ -68,7 +68,6 @@ export interface WaitQueueMember {
 /** @public */
 export interface CloseOptions {
   force?: boolean;
-  serviceId?: ObjectId;
 }
 
 /** @public */
@@ -398,22 +397,15 @@ export class ConnectionPool extends TypedEventEmitter<ConnectionPoolEvents> {
     eachAsync<Connection>(
       this[kConnections].toArray(),
       (conn, cb) => {
-        // Destroy the connection in the case of closing the entire pool
-        // or if the connection matches the service id.
-        if (!options.serviceId || options.serviceId === conn.serviceId) {
-          this.emit(
-            ConnectionPool.CONNECTION_CLOSED,
-            new ConnectionClosedEvent(this, conn, 'poolClosed')
-          );
-          conn.destroy(options, cb);
-        }
+        this.emit(
+          ConnectionPool.CONNECTION_CLOSED,
+          new ConnectionClosedEvent(this, conn, 'poolClosed')
+        );
+        conn.destroy(options, cb);
       },
       err => {
-        // Dont close the entire pool for error on single server.
-        if (!options.serviceId) {
-          this[kConnections].clear();
-          this.emit(ConnectionPool.CONNECTION_POOL_CLOSED, new ConnectionPoolClosedEvent(this));
-        }
+        this[kConnections].clear();
+        this.emit(ConnectionPool.CONNECTION_POOL_CLOSED, new ConnectionPoolClosedEvent(this));
         callback(err);
       }
     );

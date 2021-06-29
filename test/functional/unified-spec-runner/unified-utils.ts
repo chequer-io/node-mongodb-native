@@ -27,11 +27,14 @@ export async function topologySatisfies(
   }
 
   if (r.topologies) {
+    console.error('r.topologies', r.topologies);
+    console.error('config.topologyType', config.topologyType);
     const topologyType = {
       Single: 'single',
       ReplicaSetNoPrimary: 'replicaset',
       ReplicaSetWithPrimary: 'replicaset',
-      Sharded: 'sharded'
+      Sharded: 'sharded',
+      LoadBalanced: 'load-balanced'
     }[config.topologyType];
 
     if (r.topologies.includes('sharded-replicaset') && topologyType === 'sharded') {
