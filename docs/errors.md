@@ -181,7 +181,7 @@ The test plan consists of a series of prose tests.
 As numerous errors are being introduced, select classes will be tested.
 The classes to be tested will be selected based on two characteristics:
 
-1. The **frequency** of which users may encounter this error. Errors that users will likely catch in their code, including but not limited to `MongoIOError` and `MongoNetworkTimeoutError`, are part of the test plan. _Note:_ Error classes that should never be instantiated, such as `MongoLogicError` and `MongoRuntimeError`, will not be tested as the user should not encounter them.
+1. The **frequency** with which users may encounter this error. Errors that users will likely catch in their code, including but not limited to `MongoIOError` and `MongoNetworkTimeoutError`, are part of the test plan. _Note:_ Error classes that should never be instantiated, such as `MongoLogicError` and `MongoRuntimeError`, will not be tested as the user should not encounter them.
 2. The **scope** of the error. Errors that tackle a large subset of issues, including but not limited to `MongoServerError` and `MongoSystemError`, will _not_ be part of the test plan.
 
 ## `MongoLogicError`
