@@ -639,10 +639,11 @@ function executeCommands(
       );
     }
   } catch (err) {
+    const e = err as any;
     // Force top level error
-    err.ok = 0;
+    e.ok = 0;
     // Merge top level error and return
-    mergeBatchResults(batch, bulkOperation.s.bulkResult, err, undefined);
+    mergeBatchResults(batch, bulkOperation.s.bulkResult, e, undefined);
     callback();
   }
 }

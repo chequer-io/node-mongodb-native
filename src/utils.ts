@@ -24,6 +24,11 @@ import { URL } from 'url';
  * @public
  */
 export type Callback<T = any> = (error?: AnyError, result?: T) => void;
+/**
+ * Empty callback
+ * @public
+ */
+export type EmptyParameterCallback = () => void;
 /** @public */
 export type CallbackWithType<E = AnyError, T0 = any> = (error?: E, result?: T0) => void;
 
@@ -282,7 +287,7 @@ export function executeLegacyOperation(
     try {
       return operation(...args);
     } catch (e) {
-      handler(e);
+      handler(e as AnyError);
       throw e;
     }
   }
@@ -299,7 +304,7 @@ export function executeLegacyOperation(
     try {
       return operation(...args);
     } catch (e) {
-      handler(e);
+      handler(e as AnyError);
     }
   });
 }

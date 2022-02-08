@@ -343,6 +343,7 @@ export type {
 export type { TransactionOptions, Transaction, TxnState } from './transactions';
 export type {
   Callback,
+  EmptyParameterCallback,
   ClientMetadata,
   ClientMetadataOptions,
   MongoDBNamespace,

@@ -125,13 +125,13 @@ export class GridFSBucketWriteStream extends Writable {
    * @returns False if this write required flushing a chunk to MongoDB. True otherwise.
    */
   write(chunk: Buffer): boolean;
-  write(chunk: Buffer, callback: Callback<void>): boolean;
+  write(chunk: Buffer, callback: Callback): boolean;
   write(chunk: Buffer, encoding: BufferEncoding | undefined): boolean;
-  write(chunk: Buffer, encoding: BufferEncoding | undefined, callback: Callback<void>): boolean;
+  write(chunk: Buffer, encoding: BufferEncoding | undefined, callback: Callback): boolean;
   write(
     chunk: Buffer,
-    encodingOrCallback?: Callback<void> | BufferEncoding,
-    callback?: Callback<void>
+    encodingOrCallback?: Callback | BufferEncoding,
+    callback?: Callback
   ): boolean {
     const encoding = typeof encodingOrCallback === 'function' ? undefined : encodingOrCallback;
     callback = typeof encodingOrCallback === 'function' ? encodingOrCallback : callback;
@@ -145,8 +145,8 @@ export class GridFSBucketWriteStream extends Writable {
    * @param callback - called when chunks are successfully removed or error occurred
    */
   abort(): Promise<void>;
-  abort(callback: Callback<void>): void;
-  abort(callback?: Callback<void>): Promise<void> | void {
+  abort(callback: Callback): void;
+  abort(callback?: Callback): Promise<void> | void {
     const Promise = PromiseProvider.get();
     let error: MongoDriverError;
     if (this.state.streamEnd) {
@@ -178,20 +178,14 @@ export class GridFSBucketWriteStream extends Writable {
    * @param encoding - Optional encoding for the buffer
    * @param callback - Function to call when all files and chunks have been persisted to MongoDB
    */
-  end(): void;
-  end(chunk: Buffer): void;
-  end(callback: Callback<GridFSFile | void>): void;
-  end(chunk: Buffer, callback: Callback<GridFSFile | void>): void;
+  end(chunk: Buffer, callback?: Callback<GridFSFile>): void;
+  end(callback?: Callback<GridFSFile>): void;
   end(chunk: Buffer, encoding: BufferEncoding): void;
+  end(chunk: Buffer, encoding: BufferEncoding | undefined, callback: Callback<GridFSFile>): void;
   end(
-    chunk: Buffer,
-    encoding: BufferEncoding | undefined,
-    callback: Callback<GridFSFile | void>
-  ): void;
-  end(
-    chunkOrCallback?: Buffer | Callback<GridFSFile | void>,
-    encodingOrCallback?: BufferEncoding | Callback<GridFSFile | void>,
-    callback?: Callback<GridFSFile | void>
+    chunkOrCallback?: Buffer | Callback<GridFSFile>,
+    encodingOrCallback?: BufferEncoding | Callback<GridFSFile>,
+    callback?: Callback<GridFSFile>
   ): void {
     const chunk = typeof chunkOrCallback === 'function' ? undefined : chunkOrCallback;
     const encoding = typeof encodingOrCallback === 'function' ? undefined : encodingOrCallback;
@@ -436,7 +430,7 @@ function doWrite(
   stream: GridFSBucketWriteStream,
   chunk: Buffer,
   encoding?: BufferEncoding,
-  callback?: Callback<void>
+  callback?: Callback
 ): boolean {
   if (checkAborted(stream, callback)) {
     return false;
@@ -570,7 +564,7 @@ function writeRemnant(stream: GridFSBucketWriteStream, callback?: Callback): boo
   return true;
 }
 
-function checkAborted(stream: GridFSBucketWriteStream, callback?: Callback<void>): boolean {
+function checkAborted(stream: GridFSBucketWriteStream, callback?: Callback): boolean {
   if (stream.state.aborted) {
     if (typeof callback === 'function') {
       callback(new MongoDriverError('this stream has been aborted'));

@@ -336,7 +336,7 @@ function init(stream: GridFSBucketReadStream): void {
     try {
       stream.s.bytesToSkip = handleStartOption(stream, doc, stream.s.options);
     } catch (error) {
-      return __handleError(stream, error);
+      return __handleError(stream, error as Error);
     }
 
     const filter: Document = { files_id: doc._id };
@@ -362,7 +362,7 @@ function init(stream: GridFSBucketReadStream): void {
     try {
       stream.s.bytesToTrim = handleEndOption(stream, doc, stream.s.cursor, stream.s.options);
     } catch (error) {
-      return __handleError(stream, error);
+      return __handleError(stream, error as Error);
     }
 
     stream.emit(GridFSBucketReadStream.FILE, doc);

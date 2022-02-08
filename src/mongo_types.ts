@@ -253,9 +253,13 @@ export type ArrayOperator<Type> = {
 
 /** @public */
 export type SetFields<TSchema> = ({
-  readonly [key in KeysOfAType<TSchema, ReadonlyArray<any> | undefined>]?:
-    | OptionalId<Flatten<TSchema[key]>>
-    | AddToSetOperators<Array<OptionalId<Flatten<TSchema[key]>>>>;
+  readonly [key in KeysOfAType<TSchema, ReadonlyArray<any> | undefined>]?: Flatten<
+    TSchema[key]
+  > extends { _id?: any }
+    ?
+        | OptionalId<Flatten<TSchema[key]>>
+        | AddToSetOperators<Array<OptionalId<Flatten<TSchema[key]>>>>
+    : never;
 } &
   NotAcceptedFields<TSchema, ReadonlyArray<any> | undefined>) & {
   readonly [key: string]: AddToSetOperators<any> | any;
