@@ -267,9 +267,11 @@ export type SetFields<TSchema> = ({
 
 /** @public */
 export type PushOperator<TSchema> = ({
-  readonly [key in KeysOfAType<TSchema, ReadonlyArray<any>>]?:
-    | Flatten<TSchema[key]>
-    | ArrayOperator<Array<Flatten<TSchema[key]>>>;
+  readonly [key in KeysOfAType<TSchema, ReadonlyArray<any>>]?: Flatten<TSchema[key]> extends {
+    _id?: any;
+  }
+    ? Flatten<TSchema[key]> | ArrayOperator<Array<Flatten<TSchema[key]>>>
+    : never;
 } &
   NotAcceptedFields<TSchema, ReadonlyArray<any>>) & {
   readonly [key: string]: ArrayOperator<any> | any;
@@ -277,9 +279,11 @@ export type PushOperator<TSchema> = ({
 
 /** @public */
 export type PullOperator<TSchema> = ({
-  readonly [key in KeysOfAType<TSchema, ReadonlyArray<any>>]?:
-    | Partial<Flatten<TSchema[key]>>
-    | FilterOperations<Flatten<TSchema[key]>>;
+  readonly [key in KeysOfAType<TSchema, ReadonlyArray<any>>]?: Flatten<TSchema[key]> extends {
+    _id?: any;
+  }
+    ? Partial<Flatten<TSchema[key]>> | FilterOperations<Flatten<TSchema[key]>>
+    : never;
 } &
   NotAcceptedFields<TSchema, ReadonlyArray<any>>) & {
   readonly [key: string]: FilterOperators<any> | any;
