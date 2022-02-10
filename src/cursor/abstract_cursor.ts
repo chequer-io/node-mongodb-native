@@ -241,7 +241,7 @@ export abstract class AbstractCursor<
               const transformed = transform(chunk);
               callback(undefined, transformed);
             } catch (err) {
-              callback(err);
+              callback(err as Error);
             }
           }
         })
@@ -331,7 +331,7 @@ export abstract class AbstractCursor<
           try {
             result = iterator(doc); // TODO(NODE-3283): Improve transform typing
           } catch (error) {
-            return done(error);
+            return done(error as Error);
           }
 
           if (result === false) return done();
@@ -344,7 +344,7 @@ export abstract class AbstractCursor<
                 (transform ? transform(internalDocs[i]) : internalDocs[i]) as T // TODO(NODE-3283): Improve transform typing
               );
             } catch (error) {
-              return done(error);
+              return done(error as Error);
             }
             if (result === false) return done();
           }

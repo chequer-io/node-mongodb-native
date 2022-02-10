@@ -441,6 +441,12 @@ function setOption(
   }
 }
 
+interface TransformArgs {
+  name: string;
+  options: MongoOptions;
+  values: unknown[]
+}
+
 interface OptionDescriptor {
   target?: string;
   type?: 'boolean' | 'int' | 'uint' | 'record' | 'string' | 'any';
@@ -452,45 +458,43 @@ interface OptionDescriptor {
    * @param options - the options so far for resolution
    * @param values - the possible values in precedence order
    */
-  transform?: (args: { name: string; options: MongoOptions; values: unknown[] }) => unknown;
+  transform?: (args: TransformArgs) => unknown;
 }
 
-export const OPTIONS = {
+export const OPTIONS: Record<keyof MongoClientOptions, OptionDescriptor> = {
   appName: {
     target: 'metadata',
-    transform({ options, values: [value] }): DriverInfo {
+    transform({ options, values: [value] }: TransformArgs): DriverInfo {
       return makeClientMetadata({ ...options.driverInfo, appName: String(value) });
-    }
+    },
   },
   auth: {
     target: 'credentials',
-    transform({ name, options, values: [value] }): MongoCredentials {
+    transform({ name, options, values: [value] }: TransformArgs): MongoCredentials {
       if (!isRecord(value, ['username', 'password'] as const)) {
         throw new MongoParseError(
-          `${name} must be an object with 'username' and 'password' properties`
+          `${name} must be an object with 'username' and 'password' properties`,
         );
       }
       return MongoCredentials.merge(options.credentials, {
         username: value.username,
-        password: value.password
+        password: value.password,
       });
-    }
+    },
   },
   authMechanism: {
     target: 'credentials',
-    transform({ options, values: [value] }): MongoCredentials {
+    transform({ options, values: [value] }: TransformArgs): MongoCredentials {
       const mechanisms = Object.values(AuthMechanism);
       const [mechanism] = mechanisms.filter(m => m.match(RegExp(String.raw`\b${value}\b`, 'i')));
       if (!mechanism) {
         throw new MongoParseError(`authMechanism one of ${mechanisms}, got ${value}`);
       }
       let source = options.credentials?.source;
-      if (
-        mechanism === AuthMechanism.MONGODB_PLAIN ||
+      if (mechanism === AuthMechanism.MONGODB_PLAIN ||
         mechanism === AuthMechanism.MONGODB_GSSAPI ||
         mechanism === AuthMechanism.MONGODB_AWS ||
-        mechanism === AuthMechanism.MONGODB_X509
-      ) {
+        mechanism === AuthMechanism.MONGODB_X509) {
         // some mechanisms have '$external' as the Auth Source
         source = '$external';
       }
@@ -502,13 +506,13 @@ export const OPTIONS = {
       return MongoCredentials.merge(options.credentials, {
         mechanism,
         source,
-        password
+        password,
       });
-    }
+    },
   },
   authMechanismProperties: {
     target: 'credentials',
-    transform({ options, values: [value] }): MongoCredentials {
+    transform({ options, values: [value] }: TransformArgs): MongoCredentials {
       if (typeof value === 'string') {
         value = toRecord(value);
       }
@@ -516,51 +520,50 @@ export const OPTIONS = {
         throw new MongoParseError('AuthMechanismProperties must be an object');
       }
       return MongoCredentials.merge(options.credentials, { mechanismProperties: value });
-    }
+    },
   },
   authSource: {
     target: 'credentials',
-    transform({ options, values: [value] }): MongoCredentials {
+    transform({ options, values: [value] }: TransformArgs): MongoCredentials {
       const source = String(value);
       return MongoCredentials.merge(options.credentials, { source });
-    }
+    },
   },
   autoEncryption: {
-    type: 'record'
+    type: 'record',
   },
   bsonRegExp: {
-    type: 'boolean'
+    type: 'boolean',
   },
   serverApi: {
     target: 'serverApi',
-    transform({ values: [version] }): ServerApi {
-      const serverApiToValidate =
-        typeof version === 'string' ? ({ version } as ServerApi) : (version as ServerApi);
+    transform({ values: [version] }: TransformArgs): ServerApi {
+      const serverApiToValidate = typeof version === 'string' ? ({ version } as ServerApi) : (version as ServerApi);
       const versionToValidate = serverApiToValidate && serverApiToValidate.version;
       if (!versionToValidate) {
         throw new MongoParseError(
           `Invalid \`serverApi\` property; must specify a version from the following enum: ["${Object.values(
-            ServerApiVersion
-          ).join('", "')}"]`
+            ServerApiVersion,
+          ).join('", "')}"]`,
         );
       }
       if (!Object.values(ServerApiVersion).some(v => v === versionToValidate)) {
         throw new MongoParseError(
           `Invalid server API version=${versionToValidate}; must be in the following enum: ["${Object.values(
-            ServerApiVersion
-          ).join('", "')}"]`
+            ServerApiVersion,
+          ).join('", "')}"]`,
         );
       }
       return serverApiToValidate;
-    }
+    },
   },
   checkKeys: {
-    type: 'boolean'
+    type: 'boolean',
   },
   compressors: {
     default: 'none',
     target: 'compressors',
-    transform({ values }) {
+    transform({ values }: TransformArgs) {
       const compressionList = new Set();
       for (const compVal of values as string[]) {
         for (const c of compVal.split(',')) {
@@ -572,45 +575,46 @@ export const OPTIONS = {
         }
       }
       return [...compressionList];
-    }
+    },
   },
   connectTimeoutMS: {
     default: 30000,
-    type: 'uint'
+    type: 'uint',
   },
   dbName: {
-    type: 'string'
+    type: 'string',
   },
   directConnection: {
     default: false,
-    type: 'boolean'
+    type: 'boolean',
   },
   driverInfo: {
     target: 'metadata',
     default: makeClientMetadata(),
-    transform({ options, values: [value] }) {
-      if (!isRecord(value)) throw new MongoParseError('DriverInfo must be an object');
+    transform({ options, values: [value] }: TransformArgs) {
+      if (!isRecord(value))
+        throw new MongoParseError('DriverInfo must be an object');
       return makeClientMetadata({
         driverInfo: value,
-        appName: options.metadata?.application?.name
+        appName: options.metadata?.application?.name,
       });
-    }
+    },
   },
   family: {
-    transform({ name, values: [value] }): 4 | 6 {
+    transform({ name, values: [value] }: TransformArgs): 4 | 6 {
       const transformValue = getInt(name, value);
       if (transformValue === 4 || transformValue === 6) {
         return transformValue;
       }
       throw new MongoParseError(`Option 'family' must be 4 or 6 got ${transformValue}.`);
-    }
+    },
   },
   fieldsAsRaw: {
-    type: 'record'
+    type: 'record',
   },
   forceServerObjectId: {
     default: false,
-    type: 'boolean'
+    type: 'boolean',
   },
   fsync: {
     deprecated: 'Please use journal instead',
@@ -619,19 +623,20 @@ export const OPTIONS = {
       const wc = WriteConcern.fromOptions({
         writeConcern: {
           ...options.writeConcern,
-          fsync: getBoolean(name, value)
-        }
+          fsync: getBoolean(name, value),
+        },
       });
-      if (!wc) throw new MongoParseError(`Unable to make a writeConcern from fsync=${value}`);
+      if (!wc)
+        throw new MongoParseError(`Unable to make a writeConcern from fsync=${value}`);
       return wc;
-    }
+    },
   } as OptionDescriptor,
   heartbeatFrequencyMS: {
     default: 10000,
-    type: 'uint'
+    type: 'uint',
   },
   ignoreUndefined: {
-    type: 'boolean'
+    type: 'boolean',
   },
   j: {
     deprecated: 'Please use journal instead',
@@ -640,179 +645,183 @@ export const OPTIONS = {
       const wc = WriteConcern.fromOptions({
         writeConcern: {
           ...options.writeConcern,
-          journal: getBoolean(name, value)
-        }
+          journal: getBoolean(name, value),
+        },
       });
-      if (!wc) throw new MongoParseError(`Unable to make a writeConcern from journal=${value}`);
+      if (!wc)
+        throw new MongoParseError(`Unable to make a writeConcern from journal=${value}`);
       return wc;
-    }
+    },
   } as OptionDescriptor,
   journal: {
     target: 'writeConcern',
-    transform({ name, options, values: [value] }): WriteConcern {
+    transform({ name, options, values: [value] }: TransformArgs): WriteConcern {
       const wc = WriteConcern.fromOptions({
         writeConcern: {
           ...options.writeConcern,
-          journal: getBoolean(name, value)
-        }
+          journal: getBoolean(name, value),
+        },
       });
-      if (!wc) throw new MongoParseError(`Unable to make a writeConcern from journal=${value}`);
+      if (!wc)
+        throw new MongoParseError(`Unable to make a writeConcern from journal=${value}`);
       return wc;
-    }
+    },
   },
   keepAlive: {
     default: true,
-    type: 'boolean'
+    type: 'boolean',
   },
   keepAliveInitialDelay: {
     default: 120000,
-    type: 'uint'
+    type: 'uint',
   },
   localThresholdMS: {
     default: 15,
-    type: 'uint'
+    type: 'uint',
   },
   logger: {
     default: new Logger('MongoClient'),
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       if (value instanceof Logger) {
         return value;
       }
       emitWarning('Alternative loggers might not be supported');
       // TODO: make Logger an interface that others can implement, make usage consistent in driver
       // DRIVERS-1204
-    }
+    },
   },
   loggerLevel: {
     target: 'logger',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return new Logger('MongoClient', { loggerLevel: value as LoggerLevel });
-    }
+    },
   },
   maxIdleTimeMS: {
     default: 0,
-    type: 'uint'
+    type: 'uint',
   },
   maxPoolSize: {
     default: 100,
-    type: 'uint'
+    type: 'uint',
   },
   maxStalenessSeconds: {
     target: 'readPreference',
-    transform({ name, options, values: [value] }) {
+    transform({ name, options, values: [value] }: TransformArgs) {
       const maxStalenessSeconds = getUint(name, value);
       if (options.readPreference) {
         return ReadPreference.fromOptions({
-          readPreference: { ...options.readPreference, maxStalenessSeconds }
+          readPreference: { ...options.readPreference, maxStalenessSeconds },
         });
       } else {
         return new ReadPreference('secondary', undefined, { maxStalenessSeconds });
       }
-    }
+    },
   },
   minInternalBufferSize: {
-    type: 'uint'
+    type: 'uint',
   },
   minPoolSize: {
     default: 0,
-    type: 'uint'
+    type: 'uint',
   },
   minHeartbeatFrequencyMS: {
     default: 500,
-    type: 'uint'
+    type: 'uint',
   },
   monitorCommands: {
     default: true,
-    type: 'boolean'
+    type: 'boolean',
   },
   name: {
     target: 'driverInfo',
     transform({ values: [value], options }) {
       return { ...options.driverInfo, name: String(value) };
-    }
+    },
   } as OptionDescriptor,
   noDelay: {
     default: true,
-    type: 'boolean'
+    type: 'boolean',
   },
   pkFactory: {
     default: DEFAULT_PK_FACTORY,
-    transform({ values: [value] }): PkFactory {
+    transform({ values: [value] }: TransformArgs): PkFactory {
       if (isRecord(value, ['createPk'] as const) && typeof value.createPk === 'function') {
         return value as PkFactory;
       }
       throw new MongoParseError(
-        `Option pkFactory must be an object with a createPk function, got ${value}`
+        `Option pkFactory must be an object with a createPk function, got ${value}`,
       );
-    }
+    },
   },
   promiseLibrary: {
     deprecated: true,
-    type: 'any'
+    type: 'any',
   },
   promoteBuffers: {
-    type: 'boolean'
+    type: 'boolean',
   },
   promoteLongs: {
-    type: 'boolean'
+    type: 'boolean',
   },
   promoteValues: {
-    type: 'boolean'
+    type: 'boolean',
   },
   raw: {
     default: false,
-    type: 'boolean'
+    type: 'boolean',
   },
   readConcern: {
-    transform({ values: [value], options }) {
+    transform({ values: [value], options }: TransformArgs) {
       if (value instanceof ReadConcern || isRecord(value, ['level'] as const)) {
         return ReadConcern.fromOptions({ ...options.readConcern, ...value } as any);
       }
       throw new MongoParseError(`ReadConcern must be an object, got ${JSON.stringify(value)}`);
-    }
+    },
   },
   readConcernLevel: {
     target: 'readConcern',
-    transform({ values: [level], options }) {
+    transform({ values: [level], options }: TransformArgs) {
       return ReadConcern.fromOptions({
         ...options.readConcern,
-        level: level as ReadConcernLevel
+        level: level as ReadConcernLevel,
       });
-    }
+    },
   },
   readPreference: {
     default: ReadPreference.primary,
-    transform({ values: [value], options }) {
+    transform({ values: [value], options }: TransformArgs) {
       if (value instanceof ReadPreference) {
         return ReadPreference.fromOptions({
           readPreference: { ...options.readPreference, ...value },
-          ...value
+          ...value,
         } as any);
       }
       if (isRecord(value, ['mode'] as const)) {
         const rp = ReadPreference.fromOptions({
           readPreference: { ...options.readPreference, ...value },
-          ...value
+          ...value,
         } as any);
-        if (rp) return rp;
-        else throw new MongoParseError(`Cannot make read preference from ${JSON.stringify(value)}`);
+        if (rp)
+          return rp;
+        else
+          throw new MongoParseError(`Cannot make read preference from ${JSON.stringify(value)}`);
       }
       if (typeof value === 'string') {
         const rpOpts = {
           hedge: options.readPreference?.hedge,
-          maxStalenessSeconds: options.readPreference?.maxStalenessSeconds
+          maxStalenessSeconds: options.readPreference?.maxStalenessSeconds,
         };
         return new ReadPreference(
           value as ReadPreferenceMode,
           options.readPreference?.tags,
-          rpOpts
+          rpOpts,
         );
       }
-    }
+    },
   },
   readPreferenceTags: {
     target: 'readPreference',
-    transform({ values, options }) {
+    transform({ values, options }: TransformArgs) {
       const readPreferenceTags = [];
       for (const tag of values) {
         const readPreferenceTag: TagSet = Object.create(null);
@@ -830,113 +839,113 @@ export const OPTIONS = {
       }
       return ReadPreference.fromOptions({
         readPreference: options.readPreference,
-        readPreferenceTags
+        readPreferenceTags,
       });
-    }
+    },
   },
   replicaSet: {
-    type: 'string'
+    type: 'string',
   },
   retryReads: {
     default: true,
-    type: 'boolean'
+    type: 'boolean',
   },
   retryWrites: {
     default: true,
-    type: 'boolean'
+    type: 'boolean',
   },
   serializeFunctions: {
-    type: 'boolean'
+    type: 'boolean',
   },
   serverSelectionTimeoutMS: {
     default: 30000,
-    type: 'uint'
+    type: 'uint',
   },
   servername: {
-    type: 'string'
+    type: 'string',
   },
   socketTimeoutMS: {
     default: 0,
-    type: 'uint'
+    type: 'uint',
   },
   ssl: {
     target: 'tls',
-    type: 'boolean'
+    type: 'boolean',
   },
   sslCA: {
     target: 'ca',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return fs.readFileSync(String(value), { encoding: 'ascii' });
-    }
+    },
   },
   sslCRL: {
     target: 'crl',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return fs.readFileSync(String(value), { encoding: 'ascii' });
-    }
+    },
   },
   sslCert: {
     target: 'cert',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return fs.readFileSync(String(value), { encoding: 'ascii' });
-    }
+    },
   },
   sslKey: {
     target: 'key',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return fs.readFileSync(String(value), { encoding: 'ascii' });
-    }
+    },
   },
   sslPass: {
     deprecated: true,
     target: 'passphrase',
-    type: 'string'
+    type: 'string',
   },
   sslValidate: {
     target: 'rejectUnauthorized',
-    type: 'boolean'
+    type: 'boolean',
   },
   tls: {
-    type: 'boolean'
+    type: 'boolean',
   },
   tlsAllowInvalidCertificates: {
     target: 'rejectUnauthorized',
-    transform({ name, values: [value] }) {
+    transform({ name, values: [value] }: TransformArgs) {
       // allowInvalidCertificates is the inverse of rejectUnauthorized
       return !getBoolean(name, value);
-    }
+    },
   },
   tlsAllowInvalidHostnames: {
     target: 'checkServerIdentity',
-    transform({ name, values: [value] }) {
+    transform({ name, values: [value] }: TransformArgs) {
       // tlsAllowInvalidHostnames means setting the checkServerIdentity function to a noop
       return getBoolean(name, value) ? () => undefined : undefined;
-    }
+    },
   },
   tlsCAFile: {
     target: 'ca',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return fs.readFileSync(String(value), { encoding: 'ascii' });
-    }
+    },
   },
   tlsCertificateFile: {
     target: 'cert',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return fs.readFileSync(String(value), { encoding: 'ascii' });
-    }
+    },
   },
   tlsCertificateKeyFile: {
     target: 'key',
-    transform({ values: [value] }) {
+    transform({ values: [value] }: TransformArgs) {
       return fs.readFileSync(String(value), { encoding: 'ascii' });
-    }
+    },
   },
   tlsCertificateKeyFilePassword: {
     target: 'passphrase',
-    type: 'any'
+    type: 'any',
   },
   tlsInsecure: {
-    transform({ name, options, values: [value] }) {
+    transform({ name, options, values: [value] }: TransformArgs) {
       const tlsInsecure = getBoolean(name, value);
       if (tlsInsecure) {
         options.checkServerIdentity = () => undefined;
@@ -945,20 +954,20 @@ export const OPTIONS = {
         options.checkServerIdentity = options.tlsAllowInvalidHostnames
           ? () => undefined
           : undefined;
-        options.rejectUnauthorized = options.tlsAllowInvalidCertificates ? false : true;
+        options.rejectUnauthorized = !options.tlsAllowInvalidCertificates;
       }
       return tlsInsecure;
-    }
+    },
   },
   w: {
     target: 'writeConcern',
-    transform({ values: [value], options }) {
+    transform({ values: [value], options }: TransformArgs) {
       return WriteConcern.fromOptions({ writeConcern: { ...options.writeConcern, w: value as W } });
-    }
+    },
   },
   waitQueueTimeoutMS: {
     default: 0,
-    type: 'uint'
+    type: 'uint',
   },
   writeConcern: {
     target: 'writeConcern',
@@ -967,20 +976,20 @@ export const OPTIONS = {
         return WriteConcern.fromOptions({
           writeConcern: {
             ...options.writeConcern,
-            ...value
-          }
+            ...value,
+          },
         });
       } else if (value === 'majority' || typeof value === 'number') {
         return WriteConcern.fromOptions({
           writeConcern: {
             ...options.writeConcern,
-            w: value
-          }
+            w: value,
+          },
         });
       }
 
       throw new MongoParseError(`Invalid WriteConcern cannot parse: ${JSON.stringify(value)}`);
-    }
+    },
   } as OptionDescriptor,
   wtimeout: {
     deprecated: 'Please use wtimeoutMS instead',
@@ -989,29 +998,31 @@ export const OPTIONS = {
       const wc = WriteConcern.fromOptions({
         writeConcern: {
           ...options.writeConcern,
-          wtimeout: getUint('wtimeout', value)
-        }
+          wtimeout: getUint('wtimeout', value),
+        },
       });
-      if (wc) return wc;
+      if (wc)
+        return wc;
       throw new MongoParseError(`Cannot make WriteConcern from wtimeout`);
-    }
+    },
   } as OptionDescriptor,
   wtimeoutMS: {
     target: 'writeConcern',
-    transform({ values: [value], options }) {
+    transform({ values: [value], options }: TransformArgs) {
       const wc = WriteConcern.fromOptions({
         writeConcern: {
           ...options.writeConcern,
-          wtimeoutMS: getUint('wtimeoutMS', value)
-        }
+          wtimeoutMS: getUint('wtimeoutMS', value),
+        },
       });
-      if (wc) return wc;
+      if (wc)
+        return wc;
       throw new MongoParseError(`Cannot make WriteConcern from wtimeout`);
-    }
+    },
   },
   zlibCompressionLevel: {
     default: 0,
-    type: 'int'
+    type: 'int',
   },
   // Custom types for modifying core behavior
   connectionType: { type: 'any' },
@@ -1044,8 +1055,8 @@ export const OPTIONS = {
   index: { type: 'any' },
   // Legacy Options, these are unused but left here to avoid errors with CSFLE lib
   useNewUrlParser: { type: 'boolean' } as OptionDescriptor,
-  useUnifiedTopology: { type: 'boolean' } as OptionDescriptor
-} as Record<keyof MongoClientOptions, OptionDescriptor>;
+  useUnifiedTopology: { type: 'boolean' } as OptionDescriptor,
+} as unknown as Record<keyof MongoClientOptions, OptionDescriptor>;
 
 export const DEFAULT_OPTIONS = new CaseInsensitiveMap(
   Object.entries(OPTIONS)
