@@ -608,9 +608,9 @@ export function* makeCounter(seed = 0): Generator<number> {
 export function maybePromise<T>(
   callback: Callback<T> | undefined,
   wrapper: (fn: Callback<T>) => void
-): Promise<T> | void {
+): Promise<T> {
   const Promise = PromiseProvider.get();
-  let result: Promise<T> | void;
+  let result: Promise<T> = Promise.resolve() as unknown as Promise<T>;
   if (typeof callback !== 'function') {
     result = new Promise<any>((resolve, reject) => {
       callback = (err, res) => {

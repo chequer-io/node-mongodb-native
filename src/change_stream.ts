@@ -296,11 +296,11 @@ export class ChangeStream<TSchema extends Document> extends TypedEventEmitter<Ch
   }
 
   /** Check if there is any document still available in the Change Stream */
-  hasNext(callback?: Callback): Promise<void> | void {
+  hasNext(callback?: Callback): Promise<boolean> {
     return maybePromise(callback, cb => {
       getCursor(this, (err, cursor) => {
         if (err || !cursor) return cb(err); // failed to resume, raise an error
-        cursor.hasNext(cb);
+        cursor.hasNext(cb).then(res => cb(undefined, res));
       });
     });
   }

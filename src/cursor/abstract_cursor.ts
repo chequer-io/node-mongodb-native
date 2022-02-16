@@ -252,8 +252,8 @@ export abstract class AbstractCursor<
   }
 
   hasNext(): Promise<boolean>;
-  hasNext(callback: Callback<boolean>): void;
-  hasNext(callback?: Callback<boolean>): Promise<boolean> | void {
+  hasNext(callback: Callback<boolean>): Promise<boolean>;
+  hasNext(callback?: Callback<boolean>): Promise<boolean> {
     return maybePromise(callback, done => {
       if (this[kId] === Long.ZERO) {
         return done(undefined, false);
@@ -265,7 +265,7 @@ export abstract class AbstractCursor<
 
       next<any>(this, true, (err, doc) => {
         // FIXME(NODE):
-        if (err) return done(err);
+        if (err) return done(err, false);
 
         if (doc) {
           this[kDocuments].unshift(doc);
