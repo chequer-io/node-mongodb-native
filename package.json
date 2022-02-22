@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:mongodb/node-mongodb-native.git"
+    "url": "git@github.com:chequer-io/node-mongodb-native.git"
   },
   "keywords": [
     "mongodb",
