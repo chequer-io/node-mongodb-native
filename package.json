@@ -7,14 +7,14 @@
     "lib",
     "src",
     "etc/prepare.js",
-    "mongodb.d.ts",
-    "mongodb.ts34.d.ts"
+    "qp-mongodb.d.ts",
+    "qp-mongodb.ts34.d.ts"
   ],
-  "types": "mongodb.d.ts",
+  "types": "qp-mongodb.d.ts",
   "typesVersions": {
     "<=4.0.2": {
-      "mongodb.d.ts": [
-        "mongodb.ts34.d.ts"
+      "qp-mongodb.d.ts": [
+        "qp-mongodb.ts34.d.ts"
       ]
     }
   },
@@ -104,7 +104,7 @@
   "scripts": {
     "build:evergreen": "node .evergreen/generate_evergreen_tasks.js",
     "build:ts": "rimraf lib && tsc",
-    "build:dts": "npm run build:ts && api-extractor run && rimraf 'lib/**/*.d.ts*' && downlevel-dts mongodb.d.ts mongodb.ts34.d.ts",
+    "build:dts": "npm run build:ts && api-extractor run && rimraf 'lib/**/*.d.ts*' && downlevel-dts qp-mongodb.d.ts qp-mongodb.ts34.d.ts",
     "build:docs": "typedoc",
     "check:bench": "node test/benchmarks/driverBench",
     "check:coverage": "nyc npm run check:test",
