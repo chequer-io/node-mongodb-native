@@ -109,7 +109,7 @@ export interface DbOptions extends BSONSerializeOptions, WriteConcernOptions, Lo
  *
  * @example
  * ```js
- * const { MongoClient } = require('mongodb');
+ * const { MongoClient } = require('qp-mongodb');
  * // Connection url
  * const url = 'mongodb://localhost:27017';
  * // Database Name

@@ -78,7 +78,7 @@ function makeKerberosClient(authContext: AuthContext, callback: Callback<Kerbero
   const { username, password } = credentials;
   const mechanismProperties = credentials.mechanismProperties as MechanismProperties;
 
-  const serviceName = mechanismProperties.SERVICE_NAME ?? 'mongodb';
+  const serviceName = mechanismProperties.SERVICE_NAME ?? 'qp-mongodb';
 
   performGssapiCanonicalizeHostName(
     hostAddress.host,
