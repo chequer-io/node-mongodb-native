@@ -135,7 +135,7 @@ Add code to connect to the server and the database **myProject**:
 ```js
 const { MongoClient } = require('mongodb');
 // or as an es module:
-// import { MongoClient } from 'mongodb'
+// import { MongoClient } from 'qp-mongodb'
 
 // Connection URL
 const url = 'mongodb://localhost:27017';
