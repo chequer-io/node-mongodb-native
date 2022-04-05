@@ -1,6 +1,6 @@
 {
-  "name": "mongodb",
-  "version": "0.0.0-dev",
+  "name": "qp-mongodb",
+  "version": "0.0.0-dev.1",
   "description": "The official MongoDB driver for Node.js",
   "main": "lib/index.js",
   "files": [
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:mongodb/node-mongodb-native.git"
+    "url": "git@github.com:chequer-io/node-mongodb-native.git"
   },
   "keywords": [
     "mongodb",
@@ -89,7 +89,7 @@
   "bugs": {
     "url": "https://jira.mongodb.org/projects/NODE/issues/"
   },
-  "homepage": "https://github.com/mongodb/node-mongodb-native",
+  "homepage": "https://github.com/chequer-io/node-mongodb-native",
   "optionalDependencies": {
     "saslprep": "^1.0.3"
   },
