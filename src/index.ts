@@ -435,7 +435,8 @@ export type {
   ClientMetadataOptions,
   EventEmitterWithState,
   HostAddress,
-  InterruptibleAsyncInterval,
-  MongoDBNamespace
+  InterruptibleAsyncInterval
 } from './utils';
+
+export { MongoDBNamespace } from './utils';
 export type { W, WriteConcernOptions, WriteConcernSettings } from './write_concern';
