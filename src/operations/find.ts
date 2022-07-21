@@ -1,5 +1,5 @@
 import type { Document } from '../bson';
-import { MongoDbSessionEventBus } from '../bus/session-bus';
+import { QpSessionPause } from '../querypie/session-pause';
 import { isSharded } from '../cmap/wire_protocol/shared';
 import type { Collection } from '../collection';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
@@ -16,6 +16,8 @@ import {
 } from '../utils';
 import { CollationOptions, CommandOperation, CommandOperationOptions } from './command';
 import { Aspect, defineAspects, Hint } from './operation';
+import { UUID } from 'bson';
+import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 /**
  * @public
@@ -170,16 +172,17 @@ export class FindOperation extends CommandOperation<Document> {
       session
     };
 
-    const bus = MongoDbSessionEventBus.getOrCreate(session);
+    const pause = QpSessionPauseManager.createOrGet(session);
+    const id = new UUID().toHexString();
 
-    bus.waitD('pre', findCommand, findOptions, errPre => {
+    pause.waitOnCommand(id, 'pre', findCommand, findOptions, errPre => {
       if (errPre) {
         callback(errPre);
         return;
       }
 
       const newCallback: Callback = (err, result) => {
-        bus.waitD('post', findCommand, findOptions, errPost => {
+        pause.waitOnCommand(id, 'post', findCommand, findOptions, errPost => {
           if (errPost) {
             callback(errPost);
             return;

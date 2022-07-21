@@ -1,6 +1,6 @@
 import type { BSONSerializeOptions, Document } from '../bson';
-import type { MongoDbEventBus } from '../bus/bus';
-import { MongoDbSessionEventBus } from '../bus/session-bus';
+import type { QpPause } from '../querypie/pause';
+import { QpSessionPause } from '../querypie/session-pause';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
 import { Explain, ExplainOptions } from '../explain';
 import type { Logger } from '../logger';
@@ -19,6 +19,8 @@ import {
 import { WriteConcern, WriteConcernOptions } from '../write_concern';
 import type { ReadConcernLike } from './../read_concern';
 import { AbstractOperation, Aspect, OperationOptions } from './operation';
+import { UUID } from 'bson';
+import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 const SUPPORTS_WRITE_CONCERN_AND_COLLATION = 5;
 
@@ -183,16 +185,17 @@ export abstract class CommandOperation<T> extends AbstractOperation<T> {
 
     // server.command(this.ns, cmd, options, callback);
 
-    const bus = MongoDbSessionEventBus.getOrCreate(session);
+    const pause = QpSessionPauseManager.createOrGet(session);
+    const id = new UUID().toHexString();
 
-    bus.waitD('pre', cmd, options, errPre => {
+    pause.waitOnCommand(id, 'pre', cmd, options, errPre => {
       if (errPre) {
         callback(errPre);
         return;
       }
 
       const newCallback: Callback = (err, result) => {
-        bus.waitD('post', cmd, options, errPost => {
+        pause.waitOnCommand(id, 'post', cmd, options, errPost => {
           if (errPost) {
             callback(errPost);
             return;
