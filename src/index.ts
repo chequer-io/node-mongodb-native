@@ -440,3 +440,10 @@ export type {
 
 export { MongoDBNamespace } from './utils';
 export type { W, WriteConcernOptions, WriteConcernSettings } from './write_concern';
+
+export { MongoDbEventBus, MongoDbEventBusMap, PauseContext, MongoDbCommandType } from './bus/bus';
+export {
+  MongoDbSessionEventBus,
+  MongoDbSessionEventBusMap,
+  MongoDbEmptySessionBus
+} from './bus/session-bus';

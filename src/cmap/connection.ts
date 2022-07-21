@@ -54,6 +54,7 @@ import type { Stream } from './connect';
 import { MessageStream, OperationDescription } from './message_stream';
 import { StreamDescription, StreamDescriptionOptions } from './stream_description';
 import { applyCommonQueryOptions, getReadPreference, isSharded } from './wire_protocol/shared';
+import { MongoDbSessionEventBus } from '../bus/session-bus';
 
 /** @internal */
 const kStream = Symbol('stream');
@@ -855,6 +856,8 @@ function write(
     };
   }
 
+  // BEGIN
+
   if (!operationDescription.noResponse) {
     conn[kQueue].set(operationDescription.requestId, operationDescription);
   }
@@ -872,4 +875,43 @@ function write(
   if (operationDescription.noResponse) {
     operationDescription.cb();
   }
+
+  // BEGIN
+  // const bus = MongoDbSessionEventBus.getOrCreate(options.session);
+
+  // const originalCallback = operationDescription.cb;
+  // operationDescription.cb = (err, reply) => {
+  //   bus.wait('post', command, eventError => {
+  //     if (eventError) {
+  //       err = eventError;
+  //     }
+
+  //     originalCallback(err, reply);
+  //   });
+  // };
+
+  // bus.wait('pre', command, eventError => {
+  //   if (eventError) {
+  //     return operationDescription.cb(eventError);
+  //   }
+
+  //   if (!operationDescription.noResponse) {
+  //     conn[kQueue].set(operationDescription.requestId, operationDescription);
+  //   }
+
+  //   try {
+  //     conn[kMessageStream].writeCommand(command, operationDescription);
+  //   } catch (e) {
+  //     if (!operationDescription.noResponse) {
+  //       conn[kQueue].delete(operationDescription.requestId);
+  //       operationDescription.cb(e);
+  //       return;
+  //     }
+  //   }
+
+  //   if (operationDescription.noResponse) {
+  //     operationDescription.cb();
+  //   }
+  // });
+  // END
 }

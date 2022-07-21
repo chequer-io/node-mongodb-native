@@ -1,4 +1,6 @@
 import type { BSONSerializeOptions, Document } from '../bson';
+import type { MongoDbEventBus } from '../bus/bus';
+import { MongoDbSessionEventBus } from '../bus/session-bus';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
 import { Explain, ExplainOptions } from '../explain';
 import type { Logger } from '../logger';
@@ -177,6 +179,32 @@ export abstract class CommandOperation<T> extends AbstractOperation<T> {
       }
     }
 
-    server.command(this.ns, cmd, options, callback);
+    // BEGIN
+
+    // server.command(this.ns, cmd, options, callback);
+
+    const bus = MongoDbSessionEventBus.getOrCreate(session);
+
+    bus.waitD('pre', cmd, options, errPre => {
+      if (errPre) {
+        callback(errPre);
+        return;
+      }
+
+      const newCallback: Callback = (err, result) => {
+        bus.waitD('post', cmd, options, errPost => {
+          if (errPost) {
+            callback(errPost);
+            return;
+          }
+
+          callback(err, result);
+        });
+      };
+
+      server.command(this.ns, cmd, options, newCallback);
+    });
+
+    // END
   }
 }

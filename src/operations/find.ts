@@ -1,4 +1,5 @@
 import type { Document } from '../bson';
+import { MongoDbSessionEventBus } from '../bus/session-bus';
 import { isSharded } from '../cmap/wire_protocol/shared';
 import type { Collection } from '../collection';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
@@ -162,17 +163,34 @@ export class FindOperation extends CommandOperation<Document> {
       findCommand = decorateWithExplain(findCommand, this.explain);
     }
 
-    server.command(
-      this.ns,
-      findCommand,
-      {
-        ...this.options,
-        ...this.bsonOptions,
-        documentsReturnedIn: 'firstBatch',
-        session
-      },
-      callback
-    );
+    const findOptions = {
+      ...this.options,
+      ...this.bsonOptions,
+      documentsReturnedIn: 'firstBatch',
+      session
+    };
+
+    const bus = MongoDbSessionEventBus.getOrCreate(session);
+
+    bus.waitD('pre', findCommand, findOptions, errPre => {
+      if (errPre) {
+        callback(errPre);
+        return;
+      }
+
+      const newCallback: Callback = (err, result) => {
+        bus.waitD('post', findCommand, findOptions, errPost => {
+          if (errPost) {
+            callback(errPost);
+            return;
+          }
+
+          callback(err, result);
+        });
+      };
+
+      server.command(this.ns, findCommand, findOptions, newCallback);
+    });
   }
 }
 
