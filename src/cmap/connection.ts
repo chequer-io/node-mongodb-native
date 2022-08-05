@@ -54,7 +54,8 @@ import type { Stream } from './connect';
 import { MessageStream, OperationDescription } from './message_stream';
 import { StreamDescription, StreamDescriptionOptions } from './stream_description';
 import { applyCommonQueryOptions, getReadPreference, isSharded } from './wire_protocol/shared';
-// import { MongoDbSessionEventBus } from '../bus/session-bus';
+import { UUID } from 'bson';
+import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 /** @internal */
 const kStream = Symbol('stream');
@@ -856,62 +857,70 @@ function write(
     };
   }
 
-  // BEGIN
+  // OLD BEGIN
 
-  if (!operationDescription.noResponse) {
-    conn[kQueue].set(operationDescription.requestId, operationDescription);
-  }
+  // if (!operationDescription.noResponse) {
+  //   conn[kQueue].set(operationDescription.requestId, operationDescription);
+  // }
 
-  try {
-    conn[kMessageStream].writeCommand(command, operationDescription);
-  } catch (e) {
-    if (!operationDescription.noResponse) {
-      conn[kQueue].delete(operationDescription.requestId);
-      operationDescription.cb(e);
+  // try {
+  //   conn[kMessageStream].writeCommand(command, operationDescription);
+  // } catch (e) {
+  //   if (!operationDescription.noResponse) {
+  //     conn[kQueue].delete(operationDescription.requestId);
+  //     operationDescription.cb(e);
+  //     return;
+  //   }
+  // }
+
+  // if (operationDescription.noResponse) {
+  //   operationDescription.cb();
+  // }
+
+  // OLD END
+
+  // QP BEGIN
+  const pause = QpSessionPauseManager.createOrGet(options.session);
+  const id = new UUID().toHexString();
+
+  const originalCallback = operationDescription.cb;
+
+  pause.waitOnProtocol(id, 'pre', command, options, errPre => {
+    if (errPre) {
+      originalCallback(errPre);
       return;
     }
-  }
 
-  if (operationDescription.noResponse) {
-    operationDescription.cb();
-  }
+    const newCallback: Callback<Document> = (err, result) => {
+      pause.waitOnProtocol(id, 'post', command, options, errPost => {
+        if (errPost) {
+          originalCallback(errPost);
+          return;
+        }
 
-  // BEGIN
-  // const bus = MongoDbSessionEventBus.getOrCreate(options.session);
+        originalCallback(err, result);
+      });
+    };
 
-  // const originalCallback = operationDescription.cb;
-  // operationDescription.cb = (err, reply) => {
-  //   bus.wait('post', command, eventError => {
-  //     if (eventError) {
-  //       err = eventError;
-  //     }
+    operationDescription.cb = newCallback;
 
-  //     originalCallback(err, reply);
-  //   });
-  // };
+    if (!operationDescription.noResponse) {
+      conn[kQueue].set(operationDescription.requestId, operationDescription);
+    }
 
-  // bus.wait('pre', command, eventError => {
-  //   if (eventError) {
-  //     return operationDescription.cb(eventError);
-  //   }
+    try {
+      conn[kMessageStream].writeCommand(command, operationDescription);
+    } catch (e) {
+      if (!operationDescription.noResponse) {
+        conn[kQueue].delete(operationDescription.requestId);
+        operationDescription.cb(e);
+        return;
+      }
+    }
 
-  //   if (!operationDescription.noResponse) {
-  //     conn[kQueue].set(operationDescription.requestId, operationDescription);
-  //   }
-
-  //   try {
-  //     conn[kMessageStream].writeCommand(command, operationDescription);
-  //   } catch (e) {
-  //     if (!operationDescription.noResponse) {
-  //       conn[kQueue].delete(operationDescription.requestId);
-  //       operationDescription.cb(e);
-  //       return;
-  //     }
-  //   }
-
-  //   if (operationDescription.noResponse) {
-  //     operationDescription.cb();
-  //   }
-  // });
-  // END
+    if (operationDescription.noResponse) {
+      operationDescription.cb();
+    }
+  });
+  // QP END
 }

@@ -181,33 +181,37 @@ export abstract class CommandOperation<T> extends AbstractOperation<T> {
       }
     }
 
-    // BEGIN
+    // OLD BEGIN
 
-    // server.command(this.ns, cmd, options, callback);
+    server.command(this.ns, cmd, options, callback);
 
-    const pause = QpSessionPauseManager.createOrGet(session);
-    const id = new UUID().toHexString();
+    // OLD END
 
-    pause.waitOnCommand(id, 'pre', cmd, options, errPre => {
-      if (errPre) {
-        callback(errPre);
-        return;
-      }
+    // QP BEGIN
 
-      const newCallback: Callback = (err, result) => {
-        pause.waitOnCommand(id, 'post', cmd, options, errPost => {
-          if (errPost) {
-            callback(errPost);
-            return;
-          }
+    // const pause = QpSessionPauseManager.createOrGet(session);
+    // const id = new UUID().toHexString();
 
-          callback(err, result);
-        });
-      };
+    // pause.waitOnCommand(id, 'pre', cmd, options, errPre => {
+    //   if (errPre) {
+    //     callback(errPre);
+    //     return;
+    //   }
 
-      server.command(this.ns, cmd, options, newCallback);
-    });
+    //   const newCallback: Callback = (err, result) => {
+    //     pause.waitOnCommand(id, 'post', cmd, options, errPost => {
+    //       if (errPost) {
+    //         callback(errPost);
+    //         return;
+    //       }
 
-    // END
+    //       callback(err, result);
+    //     });
+    //   };
+
+    //   server.command(this.ns, cmd, options, newCallback);
+    // });
+
+    // QP END
   }
 }

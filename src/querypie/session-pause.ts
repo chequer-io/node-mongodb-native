@@ -1,7 +1,6 @@
 import type { Document } from 'bson';
 import type { WriteProtocolMessageType } from '../cmap/commands';
 import { TypedEventEmitter } from '../mongo_types';
-import type { CommandOperationOptions } from '../operations/command';
 import type { ClientSession, ServerSessionId } from '../sessions';
 import { QpPause, QpPausePhase } from './pause';
 
@@ -40,7 +39,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     id: string,
     phase: QpPausePhase,
     command: Document,
-    commandOptions: CommandOperationOptions & { [key: symbol]: boolean },
+    commandOptions: { [key: symbol]: boolean },
     callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
@@ -70,7 +69,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     id: string,
     event: QpPausePhase,
     command: WriteProtocolMessageType,
-    commandOptions: CommandOperationOptions & { [key: symbol]: boolean },
+    commandOptions: any & { [key: symbol]: boolean },
     callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
