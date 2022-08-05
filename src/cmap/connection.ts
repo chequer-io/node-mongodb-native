@@ -54,7 +54,7 @@ import type { Stream } from './connect';
 import { MessageStream, OperationDescription } from './message_stream';
 import { StreamDescription, StreamDescriptionOptions } from './stream_description';
 import { applyCommonQueryOptions, getReadPreference, isSharded } from './wire_protocol/shared';
-import { MongoDbSessionEventBus } from '../bus/session-bus';
+// import { MongoDbSessionEventBus } from '../bus/session-bus';
 
 /** @internal */
 const kStream = Symbol('stream');
