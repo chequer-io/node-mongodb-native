@@ -35,41 +35,11 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
   }
 
   /** @internal */
-  public waitOnCommand(
-    id: string,
-    phase: QpPausePhase,
-    command: Document,
-    commandOptions: { [key: symbol]: boolean },
-    callback: (err?: any) => void
-  ) {
-    if (commandOptions[QpPause.kNoPause]) {
-      callback();
-      return;
-    }
-
-    if (!QpPause.instance.isCommandCapturing) {
-      callback();
-      return;
-    }
-
-    if (isCommandIgnorable(command)) {
-      callback();
-      return;
-    }
-
-    // Case Msg
-    QpPause.instance.pause(this, id, phase, command);
-    this.log('Pause', command, phase);
-
-    this.waitInternal(callback);
-  }
-
-  /** @internal */
   public waitOnProtocol(
     id: string,
-    event: QpPausePhase,
+    phase: QpPausePhase,
     command: WriteProtocolMessageType,
-    commandOptions: any & { [key: symbol]: boolean },
+    commandOptions: { [key: string]: any },
     callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
@@ -111,14 +81,43 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
         return;
       }
 
-      QpPause.instance.pause(this, id, event, command.command);
+      QpPause.instance.pause(this, id, phase, command.command);
 
-      this.log('Pause', command.command, event);
+      this.log('Pause', command.command, phase);
       this.waitInternal(callback);
       return;
     }
 
     throw new Error('Invalid protocol');
+  }
+
+  /** @internal */
+  public waitOnCommand(
+    id: string,
+    phase: QpPausePhase,
+    command: Document,
+    commandOptions: { [key: string]: any },
+    callback: (err?: any) => void
+  ) {
+    if (commandOptions[QpPause.kNoPause]) {
+      callback();
+      return;
+    }
+
+    if (!QpPause.instance.isCommandCapturing) {
+      callback();
+      return;
+    }
+
+    if (isCommandIgnorable(command)) {
+      callback();
+      return;
+    }
+
+    QpPause.instance.pause(this, id, phase, command);
+    this.log('Pause', command, phase);
+
+    this.waitInternal(callback);
   }
 
   private waitInternal(_callback: (err?: any) => void) {

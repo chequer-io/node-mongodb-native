@@ -24,7 +24,7 @@ export class QpNullSessionPause extends QpSessionPause {
     id: string,
     phase: QpPausePhase,
     command: WriteProtocolMessageType,
-    commandOptions: CommandOperationOptions & { [key: symbol]: boolean },
+    commandOptions: { [key: string]: any },
     callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
@@ -77,7 +77,7 @@ export class QpNullSessionPause extends QpSessionPause {
     id: string,
     phase: QpPausePhase,
     command: Document,
-    commandOptions: CommandOperationOptions & { [key: symbol]: boolean },
+    commandOptions: { [key: string]: any },
     callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {

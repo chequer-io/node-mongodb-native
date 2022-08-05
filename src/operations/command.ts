@@ -1,5 +1,5 @@
 import type { BSONSerializeOptions, Document } from '../bson';
-import type { QpPause } from '../querypie/pause';
+import { QpPause } from '../querypie/pause';
 import { QpSessionPause } from '../querypie/session-pause';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
 import { Explain, ExplainOptions } from '../explain';

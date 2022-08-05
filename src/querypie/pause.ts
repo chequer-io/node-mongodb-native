@@ -1,4 +1,4 @@
-import type { Document } from 'bson';
+import { Document, UUID } from 'bson';
 import { CancellationToken, TypedEventEmitter } from '../mongo_types';
 import type { QpSessionPause as QpSessionPause } from './session-pause';
 
@@ -28,7 +28,7 @@ export type QpPauseContext = {
 
 /** @public */
 export class QpPause extends TypedEventEmitter<QpPauseEvents> {
-  public static kNoPause = Symbol();
+  public static kNoPause = `__QUERYPIE__.__QP_PAUSE__.__NO_PAUSE__.${new UUID().toHexString()}`;
 
   private readonly _queue: QpPauseContext[] = [];
   private _current: QpPauseContext | null = null;
