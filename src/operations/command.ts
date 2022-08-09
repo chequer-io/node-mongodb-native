@@ -1,4 +1,6 @@
 import type { BSONSerializeOptions, Document } from '../bson';
+import { QpPause } from '../querypie/pause';
+import { QpSessionPause } from '../querypie/session-pause';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
 import { Explain, ExplainOptions } from '../explain';
 import type { Logger } from '../logger';
@@ -17,6 +19,8 @@ import {
 import { WriteConcern, WriteConcernOptions } from '../write_concern';
 import type { ReadConcernLike } from './../read_concern';
 import { AbstractOperation, Aspect, OperationOptions } from './operation';
+import { UUID } from 'bson';
+import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 const SUPPORTS_WRITE_CONCERN_AND_COLLATION = 5;
 
@@ -177,6 +181,37 @@ export abstract class CommandOperation<T> extends AbstractOperation<T> {
       }
     }
 
+    // OLD BEGIN
+
     server.command(this.ns, cmd, options, callback);
+
+    // OLD END
+
+    // QP BEGIN
+
+    // const pause = QpSessionPauseManager.createOrGet(session);
+    // const id = new UUID().toHexString();
+
+    // pause.waitOnCommand(id, 'pre', cmd, options, errPre => {
+    //   if (errPre) {
+    //     callback(errPre);
+    //     return;
+    //   }
+
+    //   const newCallback: Callback = (err, result) => {
+    //     pause.waitOnCommand(id, 'post', cmd, options, errPost => {
+    //       if (errPost) {
+    //         callback(errPost);
+    //         return;
+    //       }
+
+    //       callback(err, result);
+    //     });
+    //   };
+
+    //   server.command(this.ns, cmd, options, newCallback);
+    // });
+
+    // QP END
   }
 }

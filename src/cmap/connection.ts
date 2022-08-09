@@ -54,6 +54,8 @@ import type { Stream } from './connect';
 import { MessageStream, OperationDescription } from './message_stream';
 import { StreamDescription, StreamDescriptionOptions } from './stream_description';
 import { applyCommonQueryOptions, getReadPreference, isSharded } from './wire_protocol/shared';
+import { UUID } from 'bson';
+import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 /** @internal */
 const kStream = Symbol('stream');
@@ -855,21 +857,70 @@ function write(
     };
   }
 
-  if (!operationDescription.noResponse) {
-    conn[kQueue].set(operationDescription.requestId, operationDescription);
-  }
+  // OLD BEGIN
 
-  try {
-    conn[kMessageStream].writeCommand(command, operationDescription);
-  } catch (e) {
-    if (!operationDescription.noResponse) {
-      conn[kQueue].delete(operationDescription.requestId);
-      operationDescription.cb(e);
+  // if (!operationDescription.noResponse) {
+  //   conn[kQueue].set(operationDescription.requestId, operationDescription);
+  // }
+
+  // try {
+  //   conn[kMessageStream].writeCommand(command, operationDescription);
+  // } catch (e) {
+  //   if (!operationDescription.noResponse) {
+  //     conn[kQueue].delete(operationDescription.requestId);
+  //     operationDescription.cb(e);
+  //     return;
+  //   }
+  // }
+
+  // if (operationDescription.noResponse) {
+  //   operationDescription.cb();
+  // }
+
+  // OLD END
+
+  // QP BEGIN
+  const pause = QpSessionPauseManager.createOrGet(options.session);
+  const id = new UUID().toHexString();
+
+  const originalCallback = operationDescription.cb;
+
+  pause.waitOnProtocol(id, 'pre', command, options, errPre => {
+    if (errPre) {
+      originalCallback(errPre);
       return;
     }
-  }
 
-  if (operationDescription.noResponse) {
-    operationDescription.cb();
-  }
+    const newCallback: Callback<Document> = (err, result) => {
+      pause.waitOnProtocol(id, 'post', command, options, errPost => {
+        if (errPost) {
+          originalCallback(errPost);
+          return;
+        }
+
+        originalCallback(err, result);
+      });
+    };
+
+    operationDescription.cb = newCallback;
+
+    if (!operationDescription.noResponse) {
+      conn[kQueue].set(operationDescription.requestId, operationDescription);
+    }
+
+    try {
+      conn[kMessageStream].writeCommand(command, operationDescription);
+    } catch (e) {
+      if (!operationDescription.noResponse) {
+        conn[kQueue].delete(operationDescription.requestId);
+        operationDescription.cb(e);
+        return;
+      }
+    }
+
+    if (operationDescription.noResponse) {
+      operationDescription.cb();
+    }
+  });
+  // QP END
 }

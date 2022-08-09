@@ -440,3 +440,8 @@ export type {
 
 export { MongoDBNamespace } from './utils';
 export type { W, WriteConcernOptions, WriteConcernSettings } from './write_concern';
+
+export { QpPause, QpPauseEvents, QpPauseContext, QpPausePhase } from './querypie/pause';
+export { QpSessionPause, QpSessionPauseEvents } from './querypie/session-pause';
+export { QpNullSessionPause } from './querypie/null-session-pause';
+export { QpSessionPauseManager } from './querypie/session-pause-manager';

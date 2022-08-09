@@ -1,4 +1,5 @@
 import type { Document } from '../bson';
+import { QpSessionPause } from '../querypie/session-pause';
 import { isSharded } from '../cmap/wire_protocol/shared';
 import type { Collection } from '../collection';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
@@ -15,6 +16,8 @@ import {
 } from '../utils';
 import { CollationOptions, CommandOperation, CommandOperationOptions } from './command';
 import { Aspect, defineAspects, Hint } from './operation';
+import { UUID } from 'bson';
+import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 /**
  * @public
@@ -162,17 +165,41 @@ export class FindOperation extends CommandOperation<Document> {
       findCommand = decorateWithExplain(findCommand, this.explain);
     }
 
-    server.command(
-      this.ns,
-      findCommand,
-      {
-        ...this.options,
-        ...this.bsonOptions,
-        documentsReturnedIn: 'firstBatch',
-        session
-      },
-      callback
-    );
+    const findOptions = {
+      ...this.options,
+      ...this.bsonOptions,
+      documentsReturnedIn: 'firstBatch',
+      session
+    };
+
+    // OLD BEGIN
+    server.command(this.ns, findCommand, findOptions, callback);
+    // OLD END
+
+    // QP BEGIN
+    // const pause = QpSessionPauseManager.createOrGet(session);
+    // const id = new UUID().toHexString();
+
+    // pause.waitOnCommand(id, 'pre', findCommand, findOptions, errPre => {
+    //   if (errPre) {
+    //     callback(errPre);
+    //     return;
+    //   }
+
+    //   const newCallback: Callback = (err, result) => {
+    //     pause.waitOnCommand(id, 'post', findCommand, findOptions, errPost => {
+    //       if (errPost) {
+    //         callback(errPost);
+    //         return;
+    //       }
+
+    //       callback(err, result);
+    //     });
+    //   };
+
+    //   server.command(this.ns, findCommand, findOptions, newCallback);
+    // });
+    // QP END
   }
 }
 
