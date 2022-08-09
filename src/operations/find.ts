@@ -172,28 +172,34 @@ export class FindOperation extends CommandOperation<Document> {
       session
     };
 
-    const pause = QpSessionPauseManager.createOrGet(session);
-    const id = new UUID().toHexString();
+    // OLD BEGIN
+    server.command(this.ns, findCommand, findOptions, callback);
+    // OLD END
 
-    pause.waitOnCommand(id, 'pre', findCommand, findOptions, errPre => {
-      if (errPre) {
-        callback(errPre);
-        return;
-      }
+    // QP BEGIN
+    // const pause = QpSessionPauseManager.createOrGet(session);
+    // const id = new UUID().toHexString();
 
-      const newCallback: Callback = (err, result) => {
-        pause.waitOnCommand(id, 'post', findCommand, findOptions, errPost => {
-          if (errPost) {
-            callback(errPost);
-            return;
-          }
+    // pause.waitOnCommand(id, 'pre', findCommand, findOptions, errPre => {
+    //   if (errPre) {
+    //     callback(errPre);
+    //     return;
+    //   }
 
-          callback(err, result);
-        });
-      };
+    //   const newCallback: Callback = (err, result) => {
+    //     pause.waitOnCommand(id, 'post', findCommand, findOptions, errPost => {
+    //       if (errPost) {
+    //         callback(errPost);
+    //         return;
+    //       }
 
-      server.command(this.ns, findCommand, findOptions, newCallback);
-    });
+    //       callback(err, result);
+    //     });
+    //   };
+
+    //   server.command(this.ns, findCommand, findOptions, newCallback);
+    // });
+    // QP END
   }
 }
 
