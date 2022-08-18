@@ -92,6 +92,8 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
   }
 
   public async wait(token: CancellationToken): Promise<QpPauseContext> {
+    if (this._current !== null) return this._current;
+
     while (true) {
       const context = this._queue.shift();
 
