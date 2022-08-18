@@ -1,15 +1,19 @@
+import { UUID } from 'bson';
 import EventEmitter = require('events');
-import type { CancellationToken } from '../mongo_types';
 import { PromiseProvider } from '../promise_provider';
+import type { CancellationToken } from '../mongo_types';
 
 /** @public */
 const QpNativePromise = global.Promise;
 const kIsWatching = Symbol('IsWatching');
 
-const newId = (() => {
-  let id = 0;
-  return () => {
-    return ++id;
+const log = (() => {
+  if (process.env.NODE_ENV !== 'development') {
+    return (..._: any[]) => {};
+  }
+
+  return (...args: any[]) => {
+    console.log('<QpWatchPromise>', ...args);
   };
 })();
 
@@ -23,7 +27,7 @@ class QpWatchPromise<T> {
 
   public static watch(): void {
     if (QpWatchPromise.isWatching) throw new Error('Invalid operation: already watching');
-    console.log('QpWatchPromise', 'static watch');
+    log('static watch');
 
     QpWatchPromise._isWatching = true;
     QpWatchPromise._count = 0;
@@ -32,7 +36,7 @@ class QpWatchPromise<T> {
 
   public static unwatch(): void {
     if (!QpWatchPromise.isWatching) throw new Error('Invalid operation: not watching currently');
-    console.log('QpWatchPromise', 'static unwatch');
+    log('static unwatch');
 
     QpWatchPromise._isWatching = false;
     PromiseProvider.set(QpNativePromise);
@@ -74,18 +78,14 @@ class QpWatchPromise<T> {
   private _native: Promise<T>;
   private [kIsWatching]: boolean = false;
 
-  private __id: number;
-  private __code: string | undefined = undefined;
-  private __stack: string | undefined = undefined;
+  private _id: string;
 
   public constructor(
     executor:
       | Promise<T>
       | ((resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void)
   ) {
-    this.__id = newId();
-    this.__code = executor.toString();
-    this.__stack = new Error().stack;
+    this._id = new UUID().toHexString();
 
     if (typeof executor === 'function') {
       this._native = new QpNativePromise(executor);
@@ -100,9 +100,11 @@ class QpWatchPromise<T> {
 
   public watch() {
     if (this[kIsWatching]) return;
+
+    this.log('watch');
+
     this[kIsWatching] = true;
     QpWatchPromise._count++;
-    console.log('QpWatchPromise', 'watch', this.__id, this.__code, this.__stack);
 
     this._native
       .finally(() => {})
@@ -114,9 +116,10 @@ class QpWatchPromise<T> {
 
   public unwatch() {
     if (!this[kIsWatching]) return;
-    console.log('QpWatchPromise', 'unwatch', this.__id);
-    this[kIsWatching] = false;
 
+    this.log('unwatch');
+
+    this[kIsWatching] = false;
     QpWatchPromise._count--;
   }
 
@@ -128,23 +131,26 @@ class QpWatchPromise<T> {
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
   ): Promise<TResult1 | TResult2>;
   public then(...args: any[]): Promise<any> {
-    this.unwatch();
+    this.log('then');
 
+    this.unwatch();
     return new QpWatchPromise(this._native.then(...args));
   }
   public catch<TResult = never>(
     onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null
   ): Promise<T | TResult>;
   public catch(...args: any[]): Promise<any> {
-    this.unwatch();
+    this.log('catch');
 
+    this.unwatch();
     return new QpWatchPromise(this._native.catch(...args));
   }
 
   public finally(onfinally?: (() => void) | undefined | null): Promise<T>;
   public finally(...args: any[]): Promise<any> {
-    this.unwatch();
+    this.log('finally');
 
+    this.unwatch();
     return new QpWatchPromise(this._native.finally(...args));
   }
   //#endregion
@@ -154,12 +160,16 @@ class QpWatchPromise<T> {
 
   public static reject<T = never>(reason?: any): Promise<T>;
   public static reject(reason?: any): Promise<any> {
+    log('static reject');
+
     return new QpWatchPromise<any>(QpNativePromise.reject(reason));
   }
 
   public static resolve(): Promise<void>;
   public static resolve<T>(value: T | PromiseLike<T>): Promise<T>;
   public static resolve(value?: any): Promise<any> {
+    log('static resolve');
+
     return new QpWatchPromise<any>(QpNativePromise.resolve(value));
   }
 
@@ -168,28 +178,18 @@ class QpWatchPromise<T> {
   ): Promise<{ -readonly [P in keyof T]: Awaited<T[P]> }>;
   public static all<T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>[]>;
   public static all(values: any): Promise<any> {
-    const natives = values.map((value: any) => {
-      if (value[kIsWatching] === undefined) return value;
+    log('static all');
 
-      value.unwatch();
-
-      return value._native;
-    });
-
+    const natives = QpWatchPromise.unwatchAndGetNativeAll(values);
     return new QpWatchPromise<any>(QpNativePromise.all(natives));
   }
 
   public static race<T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>>;
   public static race<T extends readonly unknown[] | []>(values: T): Promise<Awaited<T[number]>>;
   public static race(values: any): Promise<any> {
-    const natives = values.map((value: any) => {
-      if (value[kIsWatching] === undefined) return value;
+    log('static race');
 
-      value.unwatch();
-
-      return value._native;
-    });
-
+    const natives = QpWatchPromise.unwatchAndGetNativeAll(values);
     return new QpWatchPromise<any>(QpNativePromise.race(natives));
   }
 
@@ -200,17 +200,28 @@ class QpWatchPromise<T> {
     values: Iterable<T | PromiseLike<T>>
   ): Promise<PromiseSettledResult<Awaited<T>>[]>;
   public static allSettled(values: any): Promise<any> {
+    log('static allSettled');
+
+    const natives = QpWatchPromise.unwatchAndGetNativeAll(values);
+    return new QpWatchPromise<any>(QpNativePromise.allSettled(natives));
+  }
+  //#endregion
+
+  private static unwatchAndGetNativeAll(values: any) {
     const natives = values.map((value: any) => {
       if (value[kIsWatching] === undefined) return value;
 
       value.unwatch();
 
-      return value._native;
+      return value;
     });
 
-    return new QpWatchPromise<any>(QpNativePromise.allSettled(natives));
+    return natives;
   }
-  //#endregion
+
+  private log(...args: any[]) {
+    log(this._id, ...args);
+  }
 }
 
 export { QpWatchPromise, QpNativePromise };
