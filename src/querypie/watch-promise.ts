@@ -8,6 +8,9 @@ const QpNativePromise = global.Promise;
 const kIsWatching = Symbol('IsWatching');
 
 const isDebug = process.env.NODE_ENV === 'development';
+
+const map = Array.prototype.map;
+
 const log = (() => {
   if (!isDebug) {
     return (..._: any[]) => {};
@@ -215,7 +218,7 @@ class QpWatchPromise<T> {
   //#endregion
 
   private static unwatchAndGetNativeAll(values: any) {
-    const natives = values.map((value: any) => {
+    const natives = map.call(values, (value: any) => {
       if (value[kIsWatching] === undefined) return value;
 
       value.unwatch();
