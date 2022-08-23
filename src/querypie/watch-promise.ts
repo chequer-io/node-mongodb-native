@@ -7,8 +7,9 @@ import type { CancellationToken } from '../mongo_types';
 const QpNativePromise = global.Promise;
 const kIsWatching = Symbol('IsWatching');
 
+const isDebug = process.env.NODE_ENV === 'development';
 const log = (() => {
-  if (process.env.NODE_ENV !== 'development') {
+  if (!isDebug) {
     return (..._: any[]) => {};
   }
 
@@ -79,6 +80,7 @@ class QpWatchPromise<T> {
   private [kIsWatching]: boolean = false;
 
   private _id: string;
+  private _code?: string = undefined;
 
   public constructor(
     executor:
@@ -91,6 +93,11 @@ class QpWatchPromise<T> {
       this._native = new QpNativePromise(executor);
     } else {
       this._native = executor;
+    }
+
+    if (isDebug) {
+      this._code = executor.toString();
+      this.log('Created', this._code);
     }
 
     if (QpWatchPromise.isWatching) {
