@@ -445,4 +445,3 @@ export { QpPause, QpPauseEvents, QpPauseContext, QpPausePhase } from './querypie
 export { QpSessionPause, QpSessionPauseEvents } from './querypie/session-pause';
 export { QpNullSessionPause } from './querypie/null-session-pause';
 export { QpSessionPauseManager } from './querypie/session-pause-manager';
-export { QpWatchPromise, QpNativePromise } from './querypie/watch-promise';
