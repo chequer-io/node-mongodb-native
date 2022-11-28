@@ -25,45 +25,46 @@ export class QpNullSessionPause extends QpSessionPause {
     phase: QpPausePhase,
     command: WriteProtocolMessageType,
     commandOptions: { [key: string]: any },
-    callback: (err?: any) => void
+    result: Document | undefined,
+    callback: (err: any | undefined, result: Document | undefined) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
-      callback();
+      callback(undefined, result);
       return;
     }
 
     if (!QpPause.instance.isCommandCapturing) {
-      callback();
+      callback(undefined, result);
       return;
     }
 
     // Case GetMore
     if ('cursorId' in command) {
       this.log('<QueryPie Warning>', 'GetMore CALLED', command.ns, command.cursorId);
-      callback();
+      callback(undefined, result);
       return;
     }
 
     // Case KillCursor
     if ('cursorIds' in command) {
       this.log('<QueryPie Warning>', 'KillCursor CALLED', command.ns, command.cursorIds);
-      callback();
+      callback(undefined, result);
       return;
     }
 
     if ('query' in command) {
       if (isQueryIgnorable(command)) {
-        callback();
+        callback(undefined, result);
         return;
       }
 
       this.log('<QueryPie Warning>', 'Query CALLED', command.ns, command.query);
-      callback();
+      callback(undefined, result);
       return;
     }
 
     if (isCommandIgnorableInEmptyBus(command.command)) {
-      callback();
+      callback(undefined, result);
       return;
     }
 
@@ -78,6 +79,7 @@ export class QpNullSessionPause extends QpSessionPause {
     phase: QpPausePhase,
     command: Document,
     commandOptions: { [key: string]: any },
+    result: Document | undefined,
     callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {

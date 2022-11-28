@@ -1,4 +1,5 @@
 import type { Document } from 'bson';
+
 import type { WriteProtocolMessageType } from '../cmap/commands';
 import { TypedEventEmitter } from '../mongo_types';
 import type { ClientSession, ServerSessionId } from '../sessions';
@@ -6,11 +7,12 @@ import { QpPause, QpPausePhase } from './pause';
 
 /** @internal */
 export type QpSessionPauseEvents = {
-  'mongodb:command:resume': () => void;
+  'mongodb:command:resume': (updatedResult: Document | undefined) => void;
   'mongodb:command:abort': () => void;
 };
 
 const log = (...args: any[]) => {
+  // eslint-disable-next-line no-console
   console.log('<QpSessionPause>', ...args);
 };
 
@@ -40,36 +42,37 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     phase: QpPausePhase,
     command: WriteProtocolMessageType,
     commandOptions: { [key: string]: any },
-    callback: (err?: any) => void
+    result: Document | undefined,
+    callback: (err: any | undefined, result: Document | undefined) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
-      callback();
+      callback(undefined, result);
       return;
     }
 
     if (!QpPause.instance.isCommandCapturing) {
-      callback();
+      callback(undefined, result);
       return;
     }
 
     // Case GetMore
     if ('cursorId' in command) {
       this.log('<WARNING>', 'GetMore CALLED');
-      callback();
+      callback(undefined, result);
       return;
     }
 
     // Case KillCursor
     if ('cursorIds' in command) {
       this.log('<WARNING>', 'KillCursor CALLED');
-      callback();
+      callback(undefined, result);
       return;
     }
 
     // Case Query
     if ('query' in command) {
       this.log('<WARNING>', 'Query CALLED');
-      callback();
+      callback(undefined, result);
       return;
     }
 
@@ -77,14 +80,14 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     if ('command' in command) {
       if (isCommandIgnorable(command)) {
         this.log('PASSED', 'Command is ignorable');
-        callback();
+        callback(undefined, result);
         return;
       }
 
-      QpPause.instance.pause(this, id, phase, command.command);
+      QpPause.instance.pause(this, id, phase, command.command, result);
 
       this.log('Pause', command.command, phase);
-      this.waitInternal(callback);
+      this.waitInternal(result, callback);
       return;
     }
 
@@ -97,6 +100,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     phase: QpPausePhase,
     command: Document,
     commandOptions: { [key: string]: any },
+    result: Document | undefined,
     callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
@@ -114,16 +118,19 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
       return;
     }
 
-    QpPause.instance.pause(this, id, phase, command);
+    QpPause.instance.pause(this, id, phase, command, result);
     this.log('Pause', command, phase);
 
-    this.waitInternal(callback);
+    this.waitInternal(result, callback);
   }
 
-  private waitInternal(_callback: (err?: any) => void) {
+  private waitInternal(
+    originalResult: Document | undefined,
+    _callback: (err: any | undefined, updatedResult: Document | undefined) => void
+  ) {
     let isCallbackCalled = false;
 
-    const callback = (log: string, err?: any): void => {
+    const callback = (log: string, err?: any, updatedResult?: Document | undefined): void => {
       if (isCallbackCalled) return;
       this.log(log);
       isCallbackCalled = true;
@@ -131,11 +138,11 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
       this.off('mongodb:command:resume', onResume);
       this.off('mongodb:command:abort', onAbort);
 
-      _callback(err);
+      _callback(err, updatedResult ?? originalResult);
     };
 
-    const onResume = () => {
-      callback('Resume');
+    const onResume = (updatedResult: Document | undefined) => {
+      callback('Resume', undefined, updatedResult);
     };
 
     const onAbort = () => {
@@ -159,14 +166,14 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
   public static createOrGet(
     sessionId: string | ClientSession | ServerSessionId | undefined
   ): QpSessionPause | null {
-    if (sessionId === undefined) {
+    if (!sessionId) {
       return null;
     }
 
     // Case string(sessionId)
     if (typeof sessionId === 'string') {
       const instance = this._sessionInstances[sessionId];
-      if (instance !== undefined) {
+      if (instance) {
         return instance;
       }
 
