@@ -885,20 +885,20 @@ function write(
 
   const originalCallback = operationDescription.cb;
 
-  pause.waitOnProtocol(id, 'pre', command, options, errPre => {
+  pause.waitOnProtocol(id, 'pre', command, options, undefined, errPre => {
     if (errPre) {
       originalCallback(errPre);
       return;
     }
 
     const newCallback: Callback<Document> = (err, result) => {
-      pause.waitOnProtocol(id, 'post', command, options, errPost => {
+      pause.waitOnProtocol(id, 'post', command, options, result, (errPost, updatedResult) => {
         if (errPost) {
           originalCallback(errPost);
           return;
         }
 
-        originalCallback(err, result);
+        originalCallback(err, updatedResult);
       });
     };
 

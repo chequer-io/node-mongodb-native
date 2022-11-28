@@ -12,7 +12,7 @@ export class QpSessionPauseManager {
     sessionId: string | ClientSession | ServerSessionId | undefined
   ): QpSessionPause {
     const pause = QpSessionPause.createOrGet(sessionId);
-    if (pause === null) {
+    if (pause == null) {
       return this.null;
     }
 

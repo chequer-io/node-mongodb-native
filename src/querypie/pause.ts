@@ -1,4 +1,5 @@
 import { Document, UUID } from 'bson';
+
 import { CancellationToken, TypedEventEmitter } from '../mongo_types';
 import type { QpSessionPause as QpSessionPause } from './session-pause';
 
@@ -9,6 +10,7 @@ export type QpPauseEvents = {
 };
 
 const log = (...args: any[]) => {
+  // eslint-disable-next-line no-console
   console.log('<QpPause>', ...args);
 };
 
@@ -20,6 +22,7 @@ export type QpPauseContext = {
   id: string;
   sessionId: string;
   command: Document;
+  result: Document | undefined;
   phase: QpPausePhase;
 
   /** @internal */
@@ -34,7 +37,7 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
   private _current: QpPauseContext | null = null;
 
   /** @internal */
-  public _isCommandCapturing: boolean = false;
+  public _isCommandCapturing = false;
   public get isCommandCapturing(): boolean {
     return this._isCommandCapturing;
   }
@@ -48,19 +51,20 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
     log('Command Capture Stop');
     this._isCommandCapturing = false;
 
-    if (this._current !== null) {
+    if (this._current != null) {
       log('WARNING', 'STOP called with current pause context', this._current);
 
-      this._current._session.emit('mongodb:command:resume');
+      this._current._session.emit('mongodb:command:resume', undefined);
     }
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const context = this._queue.shift();
-      if (context === undefined) break;
+      if (!context) break;
 
       log('WARNING', 'STOP called with pending pause context', context);
 
-      context._session.emit('mongodb:command:resume');
+      context._session.emit('mongodb:command:resume', undefined);
     }
   }
 
@@ -68,36 +72,38 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
     log('Command Capture Abort');
     this._isCommandCapturing = false;
 
-    if (this._current !== null) {
+    if (this._current != null) {
       this._current._session.emit('mongodb:command:abort');
     }
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const context = this._queue.shift();
-      if (context === undefined) break;
+      if (!context) break;
 
       context._session.emit('mongodb:command:abort');
     }
   }
 
-  public resume(): void {
-    if (this._current === null) {
+  public resume(updatedDocument: Document | undefined): void {
+    if (this._current == null) {
       throw new Error('Not paused currently');
     }
 
-    this._current._session.emit('mongodb:command:resume');
+    this._current._session.emit('mongodb:command:resume', updatedDocument);
     this._current = null;
 
     this.tryRaisePause();
   }
 
   public async wait(token: CancellationToken): Promise<QpPauseContext> {
-    if (this._current !== null) return this._current;
+    if (this._current != null) return this._current;
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const context = this._queue.shift();
 
-      if (context !== undefined) {
+      if (context) {
         this._current = context;
         return context;
       }
@@ -148,14 +154,21 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
   }
 
   /** @internal */
-  public pause(session: QpSessionPause, id: string, phase: QpPausePhase, command: Document): void {
+  public pause(
+    session: QpSessionPause,
+    id: string,
+    phase: QpPausePhase,
+    command: Document,
+    result: Document | undefined
+  ): void {
     this._queue.push({
       id,
       sessionId: session.id,
 
       _session: session,
       phase,
-      command
+      command,
+      result
     });
 
     this.tryRaisePause();
@@ -169,7 +182,7 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
   private static _instance: QpPause | undefined = undefined;
 
   public static get instance(): QpPause {
-    if (this._instance === undefined) {
+    if (!this._instance) {
       this._instance = new QpPause();
     }
 
