@@ -1,3 +1,5 @@
+import { UUID } from 'bson';
+
 import { BSONSerializeOptions, Document, Long, ObjectId, pluckBSONSerializeOptions } from '../bson';
 import {
   CLOSE,
@@ -21,6 +23,7 @@ import {
 } from '../error';
 import type { ServerApi, SupportedNodeConnectionOptions } from '../mongo_client';
 import { CancellationToken, TypedEventEmitter } from '../mongo_types';
+import { QpWriteProtocolMessageTypeContextFactory } from '../querypie/factories/QpWriteProtocolMessageTypeContextFactory';
 import { ReadPreference, ReadPreferenceLike } from '../read_preference';
 import { applySession, ClientSession, updateSessionFromResponse } from '../sessions';
 import {
@@ -54,8 +57,6 @@ import type { Stream } from './connect';
 import { MessageStream, OperationDescription } from './message_stream';
 import { StreamDescription, StreamDescriptionOptions } from './stream_description';
 import { applyCommonQueryOptions, getReadPreference, isSharded } from './wire_protocol/shared';
-import { UUID } from 'bson';
-import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 /** @internal */
 const kStream = Symbol('stream');
@@ -788,6 +789,54 @@ function write(
   options: CommandOptions,
   callback: Callback
 ) {
+  (async () => {
+    const context = await QpWriteProtocolMessageTypeContextFactory.Create(
+      options.session,
+      command,
+      options
+    );
+
+    try {
+      await context.RaisePre();
+
+      const result = await writeInternalAsync(conn, context.Protocol, context.Options);
+
+      await context.RaisePost(result);
+      return context.Result;
+    } catch (e) {
+      await context.RaiseException(e);
+    } finally {
+      await context.RaiseComplete();
+    }
+  })().then(
+    result => {
+      callback(undefined, result);
+    },
+    err => {
+      callback(err);
+    }
+  );
+}
+
+function writeInternalAsync(
+  conn: Connection,
+  command: WriteProtocolMessageType,
+  options: CommandOptions
+): Promise<Document | undefined> {
+  return new Promise<Document | undefined>((resolve, reject) => {
+    writeInternal(conn, command, options, (err, result: Document | undefined) => {
+      if (err) return reject(err);
+      resolve(result);
+    });
+  });
+}
+
+function writeInternal(
+  conn: Connection,
+  command: WriteProtocolMessageType,
+  options: CommandOptions,
+  callback: Callback
+) {
   if (typeof options === 'function') {
     callback = options;
   }
@@ -857,70 +906,21 @@ function write(
     };
   }
 
-  // OLD BEGIN
+  if (!operationDescription.noResponse) {
+    conn[kQueue].set(operationDescription.requestId, operationDescription);
+  }
 
-  // if (!operationDescription.noResponse) {
-  //   conn[kQueue].set(operationDescription.requestId, operationDescription);
-  // }
-
-  // try {
-  //   conn[kMessageStream].writeCommand(command, operationDescription);
-  // } catch (e) {
-  //   if (!operationDescription.noResponse) {
-  //     conn[kQueue].delete(operationDescription.requestId);
-  //     operationDescription.cb(e);
-  //     return;
-  //   }
-  // }
-
-  // if (operationDescription.noResponse) {
-  //   operationDescription.cb();
-  // }
-
-  // OLD END
-
-  // QP BEGIN
-  const pause = QpSessionPauseManager.createOrGet(options.session);
-  const id = new UUID().toHexString();
-
-  const originalCallback = operationDescription.cb;
-
-  pause.waitOnProtocol(id, 'pre', command, options, undefined, errPre => {
-    if (errPre) {
-      originalCallback(errPre);
+  try {
+    conn[kMessageStream].writeCommand(command, operationDescription);
+  } catch (e) {
+    if (!operationDescription.noResponse) {
+      conn[kQueue].delete(operationDescription.requestId);
+      operationDescription.cb(e);
       return;
     }
+  }
 
-    const newCallback: Callback<Document> = (err, result) => {
-      pause.waitOnProtocol(id, 'post', command, options, result, (errPost, updatedResult) => {
-        if (errPost) {
-          originalCallback(errPost);
-          return;
-        }
-
-        originalCallback(err, updatedResult);
-      });
-    };
-
-    operationDescription.cb = newCallback;
-
-    if (!operationDescription.noResponse) {
-      conn[kQueue].set(operationDescription.requestId, operationDescription);
-    }
-
-    try {
-      conn[kMessageStream].writeCommand(command, operationDescription);
-    } catch (e) {
-      if (!operationDescription.noResponse) {
-        conn[kQueue].delete(operationDescription.requestId);
-        operationDescription.cb(e);
-        return;
-      }
-    }
-
-    if (operationDescription.noResponse) {
-      operationDescription.cb();
-    }
-  });
-  // QP END
+  if (operationDescription.noResponse) {
+    operationDescription.cb();
+  }
 }
