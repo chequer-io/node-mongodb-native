@@ -18,6 +18,9 @@ type QpRunCommandContextEvents = {
   'cancel:abort': (message: string) => void;
 };
 
+/**
+ * @public
+ */
 export class QpRunCommandContext implements IQpRunCommandContext {
   private readonly _id: string;
 

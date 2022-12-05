@@ -7,7 +7,7 @@ type QpRunCommandManagerInternalEvents = {
 };
 
 /**
- * Internal
+ * @internal
  */
 class QpRunCommandManagerInternal {
   private _queue: QpRunCommandContext[] = [];

@@ -1,5 +1,8 @@
 import type { Document } from 'bson';
 
+/**
+ * @public
+ */
 export interface IQpRunCommandContext {
   get Command(): Document;
 
