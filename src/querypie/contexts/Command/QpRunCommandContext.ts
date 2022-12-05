@@ -135,7 +135,7 @@ export class QpRunCommandContext implements IQpRunCommandContext {
   private async _WaitResumeOrAbort(
     resumeEvent: keyof QpRunCommandContextEvents & `resume:${string}`
   ): Promise<void> {
-    QpRunCommandManager.Push(this);
+    QpRunCommandManager.Instance.Push(this);
 
     const cancellationToken = new CancellationToken();
 

@@ -9,13 +9,23 @@ type QpRunCommandManagerInternalEvents = {
 /**
  * @internal
  */
-class QpRunCommandManagerInternal {
+export class QpRunCommandManager {
+  private static _instance: QpRunCommandManager;
+
+  public static get Instance() {
+    QpRunCommandManager._instance ??= new QpRunCommandManager();
+    return QpRunCommandManager._instance;
+  }
+
   private _queue: QpRunCommandContext[] = [];
   private _events = new TypedEventEmitter<QpRunCommandManagerInternalEvents>();
 
   private _currentContext: QpRunCommandContext | null = null;
 
   private _isActivated = false;
+
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  private constructor() {}
 
   /**
    * @internal
@@ -80,8 +90,3 @@ class QpRunCommandManagerInternal {
     return this._Pop(cancellationToken);
   }
 }
-
-/**
- * @public
- */
-export const QpRunCommandManager = new QpRunCommandManagerInternal();
