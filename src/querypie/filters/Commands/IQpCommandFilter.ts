@@ -1,8 +1,10 @@
 import type { Document } from 'bson';
 
-export interface IQpCommandFilter {
-  IsSkipCommand(command: Document): boolean;
-  IsRejectCommand(command: Document): boolean;
+import type { CommandOptions } from '../../../cmap/connection';
 
-  ThrowIfRejectCommand(command: Document): void;
+export interface IQpCommandFilter {
+  IsSkip(command: Document, commandOptions: CommandOptions): boolean;
+  IsReject(command: Document, commandOptions: CommandOptions): boolean;
+
+  ThrowIfReject(command: Document, commandOptions: CommandOptions): void;
 }

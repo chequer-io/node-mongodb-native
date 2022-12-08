@@ -2,7 +2,7 @@ import type { Document } from 'bson';
 import { UUID } from 'bson';
 
 import { CancellationToken, TypedEventEmitter } from '../../../mongo_types';
-import { QpInvalidQpRunCommandStepException } from '../../exceptions/QpInvalidQpRunCommandStepException';
+import { QpMongoDbInvalidQpRunCommandStepException } from '../../exceptions/QpMongoDbInvalidQpRunCommandStepException';
 import { QpLogger } from '../../loggers/QpLogger';
 import { QpRunCommandStep } from '../../models/QpRunCommandStep';
 import { QpRunCommandManager } from '../../QpRunCommandManager';
@@ -160,6 +160,6 @@ export class QpRunCommandContext implements IQpRunCommandContext {
 
     QpLogger.Global.Error(`Invalid Step: ${expected} expected, but got ${this._step}.`);
 
-    throw new QpInvalidQpRunCommandStepException(expected, this._step);
+    throw new QpMongoDbInvalidQpRunCommandStepException(expected, this._step);
   }
 }

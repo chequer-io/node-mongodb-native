@@ -10,8 +10,8 @@ import type { ClientSession, ServerSessionId } from '../../sessions';
 import type { IQpWriteProtocolMessageTypeContext } from '../contexts/WriteProtocolMessageType/IQpWriteProtocolMessageTypeContext';
 import { QpRunCommandContext_To_IQpWriteProtocolMessageTypeContext_Adapter } from '../contexts/WriteProtocolMessageType/QpRunCommandContext_To_IQpWriteProtocolMessageTypeContext_Adapter';
 import { QpWriteProtocolMessageTypePassContext } from '../contexts/WriteProtocolMessageType/QpWriteProtocolMessageTypePassContext';
-import { QpException } from '../exceptions/QpException';
 import { QpExceptionLevel } from '../exceptions/QpExceptionLevel';
+import { QpMongoDbException } from '../exceptions/QpMongoDbException';
 import { QpRunCommandManager } from '../QpRunCommandManager';
 import { resolveSessionId } from '../utils/session-id';
 import { QpRunCommandContextFactory } from './QpRunCommandContextFactory';
@@ -55,14 +55,14 @@ export class QpWriteProtocolMessageTypeContextFactory {
     }
 
     // Case default
-    throw new QpException(QpExceptionLevel.INTERNAL, 'Cannot resolve protocol type');
+    throw new QpMongoDbException(QpExceptionLevel.INTERNAL, 'Cannot resolve protocol type');
   }
 
   public static CreateWithMsg(
     msg: Msg,
     options: CommandOptions
   ): IQpWriteProtocolMessageTypeContext {
-    const runCommandContext = QpRunCommandContextFactory.Create(msg.command);
+    const runCommandContext = QpRunCommandContextFactory.Create(msg.command, options);
 
     if (!runCommandContext) {
       return new QpWriteProtocolMessageTypePassContext(msg, options);

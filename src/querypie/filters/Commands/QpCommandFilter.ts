@@ -1,7 +1,7 @@
 import type { Document } from 'bson';
 
-import { QpException } from '../../exceptions/QpException';
 import { QpExceptionLevel } from '../../exceptions/QpExceptionLevel';
+import { QpMongoDbException } from '../../exceptions/QpMongoDbException';
 import type { IQpCommandFilter } from './IQpCommandFilter';
 
 export class QpCommandFilter implements IQpCommandFilter {
@@ -163,27 +163,27 @@ export class QpCommandFilter implements IQpCommandFilter {
     ''
   ].filter(x => x.length !== 0);
 
-  public IsSkipCommand(command: Document): boolean {
+  public IsSkip(command: Document): boolean {
     const commandKey = this._GetCommandKey(command);
     if (commandKey == null) return false;
 
     return this._IsSkip(commandKey);
   }
 
-  public IsRejectCommand(command: Document): boolean {
+  public IsReject(command: Document): boolean {
     const commandKey = this._GetCommandKey(command);
     if (commandKey == null) return false;
 
     return this._IsReject(commandKey);
   }
 
-  public ThrowIfRejectCommand(command: Document): void {
+  public ThrowIfReject(command: Document): void {
     const commandKey = this._GetCommandKey(command);
     if (commandKey == null) return;
 
     if (!this._IsReject(commandKey)) return;
 
-    throw new QpException(
+    throw new QpMongoDbException(
       QpExceptionLevel.NORMAL,
       `A '${commandKey}' command cannot use in QueryPie.`
     );

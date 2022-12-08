@@ -445,11 +445,15 @@ export type { IQpRunCommandContext } from './querypie/contexts/Command/IQpRunCom
 export type { QpRunCommandContext } from './querypie/contexts/Command/QpRunCommandContext';
 export { QpRunCommandStep } from './querypie/models/QpRunCommandStep';
 export { QpRunCommandManager } from './querypie/QpRunCommandManager';
+export {
+  QpSkipRunCommandPhaseSymbol,
+  SkippableOptions
+} from './querypie/symbols/QpSkipRunCommandPhaseSymbol';
 
 //region Exceptions
-export { QpException } from './querypie/exceptions/QpException';
 export { QpExceptionLevel } from './querypie/exceptions/QpExceptionLevel';
-export { QpInvalidQpRunCommandStepException } from './querypie/exceptions/QpInvalidQpRunCommandStepException';
+export { QpMongoDbException } from './querypie/exceptions/QpMongoDbException';
+export { QpMongoDbInvalidQpRunCommandStepException } from './querypie/exceptions/QpMongoDbInvalidQpRunCommandStepException';
 //endregion
 
 //endregion

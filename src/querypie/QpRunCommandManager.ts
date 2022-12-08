@@ -7,7 +7,7 @@ type QpRunCommandManagerInternalEvents = {
 };
 
 /**
- * @internal
+ * @public
  */
 export class QpRunCommandManager {
   private static _instance: QpRunCommandManager;
