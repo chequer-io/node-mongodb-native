@@ -892,6 +892,11 @@ function write(
     }
 
     const newCallback: Callback<Document> = (err, result) => {
+      if (err) {
+        originalCallback(err);
+        return;
+      }
+
       pause.waitOnProtocol(id, 'post', command, options, result, (errPost, updatedResult) => {
         if (errPost) {
           originalCallback(errPost);
