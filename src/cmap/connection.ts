@@ -799,12 +799,13 @@ function write(
     try {
       await context.RaisePre();
 
-      const result = await writeInternalAsync(conn, context.Protocol, context.Options);
+      const result = await writeInternalAsync(conn, context.GetProtocol(), context.GetOptions());
 
       await context.RaisePost(result);
-      return context.Result;
+      return context.GetResult();
     } catch (e) {
       await context.RaiseException(e);
+      throw e;
     } finally {
       await context.RaiseComplete();
     }

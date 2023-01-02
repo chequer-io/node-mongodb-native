@@ -4,10 +4,10 @@ import type { WriteProtocolMessageType } from '../../../cmap/commands';
 import type { CommandOptions } from '../../../cmap/connection';
 
 export interface IQpWriteProtocolMessageTypeContext {
-  get Protocol(): WriteProtocolMessageType;
-  get Options(): CommandOptions;
+  GetProtocol(): WriteProtocolMessageType;
+  GetOptions(): CommandOptions;
 
-  get Result(): Document | undefined;
+  GetResult(): Document | undefined;
 
   RaisePre(): Promise<void>;
   RaisePost(originalResult: Document | undefined): Promise<void>;

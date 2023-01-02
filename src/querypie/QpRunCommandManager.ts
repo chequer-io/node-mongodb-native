@@ -30,18 +30,18 @@ export class QpRunCommandManager {
   /**
    * @internal
    */
-  public get IsActivated() {
+  public IsActivated() {
     return this._isActivated;
   }
 
-  /***
+  /**
    * @public
    */
   public Activate() {
     this._isActivated = true;
   }
 
-  /***
+  /**
    * @public
    */
   public Deactivate() {
@@ -50,7 +50,7 @@ export class QpRunCommandManager {
     this.Abort('QpRunCommandManager Deactivated');
   }
 
-  /***
+  /**
    * @public
    */
   public async WaitRunContext(cancellationToken: CancellationToken): Promise<QpRunCommandContext> {
@@ -68,7 +68,7 @@ export class QpRunCommandManager {
     }
   }
 
-  /***
+  /**
    * @internal
    */
   public Push(context: QpRunCommandContext): void {

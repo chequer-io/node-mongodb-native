@@ -4,9 +4,9 @@ import type { Document } from 'bson';
  * @public
  */
 export interface IQpRunCommandContext {
-  get Command(): Document;
+  GetCommand(): Document;
 
-  get Result(): Document | undefined;
+  GetResult(): Document | undefined;
 
   RaisePre(): Promise<void>;
   RaisePost(originalResult: Document | undefined): Promise<void>;

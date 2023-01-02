@@ -21,14 +21,18 @@ export class QpRunCommandContext_To_IQpWriteProtocolMessageTypeContext_Adapter
     this._options = options;
   }
 
-  get Protocol(): Msg {
-    this._protocol.command = this._context.Command;
+  GetProtocol(): Msg {
+    this._protocol.command = this._context.GetCommand();
 
     return this._protocol;
   }
 
-  get Options(): CommandOptions {
+  GetOptions(): CommandOptions {
     return this._options;
+  }
+
+  GetResult(): Document | undefined {
+    return this._context.GetResult();
   }
 
   RaisePre(): Promise<void> {
@@ -45,9 +49,5 @@ export class QpRunCommandContext_To_IQpWriteProtocolMessageTypeContext_Adapter
 
   RaiseComplete(): Promise<void> {
     return this._context.RaiseComplete();
-  }
-
-  get Result(): Document | undefined {
-    return this._context.Result;
   }
 }

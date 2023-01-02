@@ -25,7 +25,7 @@ export class QpWriteProtocolMessageTypeContextFactory {
     protocol: WriteProtocolMessageType,
     options: CommandOptions
   ): IQpWriteProtocolMessageTypeContext {
-    if (!QpRunCommandManager.Instance.IsActivated) {
+    if (!QpRunCommandManager.Instance.IsActivated()) {
       return new QpWriteProtocolMessageTypePassContext(protocol, options);
     }
 

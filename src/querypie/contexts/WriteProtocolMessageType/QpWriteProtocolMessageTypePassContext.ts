@@ -16,15 +16,15 @@ export class QpWriteProtocolMessageTypePassContext implements IQpWriteProtocolMe
     this._options = options;
   }
 
-  get Protocol(): WriteProtocolMessageType {
+  GetProtocol(): WriteProtocolMessageType {
     return this._protocol;
   }
 
-  get Options(): CommandOptions {
+  GetOptions(): CommandOptions {
     return this._options;
   }
 
-  get Result(): Document | undefined {
+  GetResult(): Document | undefined {
     return this._result;
   }
 

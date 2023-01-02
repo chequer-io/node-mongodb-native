@@ -38,33 +38,33 @@ export class QpRunCommandContext implements IQpRunCommandContext {
     this._command = command;
   }
 
-  public get Id(): string {
+  public GetId(): string {
     return this._id;
   }
 
-  public get Command(): Document {
+  public GetCommand(): Document {
     return this._command;
   }
 
-  public set Command(command: Document) {
+  public SetCommand(command: Document) {
     this._command = command;
   }
 
-  public get Result(): Document | undefined {
+  public GetResult(): Document | undefined {
     return this._result;
   }
 
-  public set Result(result: Document | undefined) {
+  public SetResult(result: Document | undefined) {
     if (!result) return;
 
     this._result = result;
   }
 
-  public get Exception(): any {
+  public GetException(): any {
     return this._exception;
   }
 
-  public get Step(): QpRunCommandStep {
+  public GetStep(): QpRunCommandStep {
     return this._step;
   }
 

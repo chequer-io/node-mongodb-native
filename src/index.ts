@@ -445,10 +445,8 @@ export type { IQpRunCommandContext } from './querypie/contexts/Command/IQpRunCom
 export type { QpRunCommandContext } from './querypie/contexts/Command/QpRunCommandContext';
 export { QpRunCommandStep } from './querypie/models/QpRunCommandStep';
 export { QpRunCommandManager } from './querypie/QpRunCommandManager';
-export {
-  QpSkipRunCommandPhaseSymbol,
-  SkippableOptions
-} from './querypie/symbols/QpSkipRunCommandPhaseSymbol';
+export type { SkippableOptions } from './querypie/symbols/QpSymbols';
+export { QpSymbols } from './querypie/symbols/QpSymbols';
 
 //region Exceptions
 export { QpExceptionLevel } from './querypie/exceptions/QpExceptionLevel';
