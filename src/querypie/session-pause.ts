@@ -3,17 +3,14 @@ import type { Document } from 'bson';
 import type { WriteProtocolMessageType } from '../cmap/commands';
 import { TypedEventEmitter } from '../mongo_types';
 import type { ClientSession, ServerSessionId } from '../sessions';
+import type { IQpMongoDbLogger } from './logger';
+import { QpMongoDbLoggerFactory } from './logger-factory';
 import { QpPause, QpPausePhase } from './pause';
 
 /** @internal */
 export type QpSessionPauseEvents = {
   'mongodb:command:resume': (updatedResult: Document | undefined) => void;
   'mongodb:command:abort': () => void;
-};
-
-const log = (...args: any[]) => {
-  // eslint-disable-next-line no-console
-  console.log('<QpSessionPause>', ...args);
 };
 
 const ignorables = ['ping'];
@@ -29,11 +26,13 @@ const isCommandIgnorable = (command: Document) => {
 /** @internal */
 export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
   public readonly id: string;
+  protected readonly logger: IQpMongoDbLogger;
 
   public constructor(id: string) {
     super();
 
     this.id = id;
+    this.logger = QpMongoDbLoggerFactory.create(`QpSessionPause#${id}`);
   }
 
   /** @internal */
@@ -57,21 +56,21 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
 
     // Case GetMore
     if ('cursorId' in command) {
-      this.log('<WARNING>', 'GetMore CALLED');
+      this.logger.warn('GetMore CALLED');
       callback(undefined, result);
       return;
     }
 
     // Case KillCursor
     if ('cursorIds' in command) {
-      this.log('<WARNING>', 'KillCursor CALLED');
+      this.logger.warn('KillCursor CALLED');
       callback(undefined, result);
       return;
     }
 
     // Case Query
     if ('query' in command) {
-      this.log('<WARNING>', 'Query CALLED');
+      this.logger.warn('Query CALLED');
       callback(undefined, result);
       return;
     }
@@ -79,14 +78,13 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     // Case Msg
     if ('command' in command) {
       if (isCommandIgnorable(command)) {
-        this.log('PASSED', 'Command is ignorable');
+        this.logger.warn('PASSED', 'Command is ignorable');
         callback(undefined, result);
         return;
       }
 
       QpPause.instance.pause(this, id, phase, command.command, result);
-
-      this.log('Pause', command.command, phase);
+      this.logger.debug('Pause', command.command, phase);
       this.waitInternal(result, callback);
       return;
     }
@@ -119,7 +117,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     }
 
     QpPause.instance.pause(this, id, phase, command, result);
-    this.log('Pause', command, phase);
+    this.logger.debug('Pause', command, phase);
 
     this.waitInternal(result, callback);
   }
@@ -132,7 +130,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
 
     const callback = (log: string, err?: any, updatedResult?: Document | undefined): void => {
       if (isCallbackCalled) return;
-      this.log(log);
+      this.logger.debug(log);
       isCallbackCalled = true;
 
       this.off('mongodb:command:resume', onResume);
@@ -153,9 +151,10 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     this.once('mongodb:command:abort', onAbort);
   }
 
-  protected log(...args: any[]) {
-    log(`#${this.id}`, ...args);
-  }
+  // protected log(...args: any[]) {
+  //   this.logger.
+  //   log(`#${this.id}`, ...args);
+  // }
 
   //#region Singleton
   private static readonly _sessionInstances: {
@@ -191,5 +190,6 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     // Case ServerSessionId
     return this.createOrGet(sessionId.id.toUUID().toHexString());
   }
+
   //#endregion
 }

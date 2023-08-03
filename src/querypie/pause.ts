@@ -1,17 +1,14 @@
 import { Document, UUID } from 'bson';
 
 import { CancellationToken, TypedEventEmitter } from '../mongo_types';
+import type { IQpMongoDbLogger } from './logger';
+import { QpMongoDbLoggerFactory } from './logger-factory';
 import type { QpSessionPause as QpSessionPause } from './session-pause';
 
 /** @public */
 export type QpPauseEvents = {
   'mongodb:pause': () => void;
   'mongodb:resume': () => void;
-};
-
-const log = (...args: any[]) => {
-  // eslint-disable-next-line no-console
-  console.log('<QpPause>', ...args);
 };
 
 /** @public */
@@ -36,6 +33,8 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
   private readonly _queue: QpPauseContext[] = [];
   private _current: QpPauseContext | null = null;
 
+  private readonly logger: IQpMongoDbLogger = QpMongoDbLoggerFactory.create('QpPause');
+
   /** @internal */
   public _isCommandCapturing = false;
   public get isCommandCapturing(): boolean {
@@ -43,16 +42,16 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
   }
 
   public start() {
-    log('Command Capture Start');
+    this.logger.debug('Command Capture Start');
     this._isCommandCapturing = true;
   }
 
   public stop() {
-    log('Command Capture Stop');
+    this.logger.debug('Command Capture Stop');
     this._isCommandCapturing = false;
 
     if (this._current != null) {
-      log('WARNING', 'STOP called with current pause context', this._current);
+      this.logger.warn('STOP called with current pause context', this._current);
 
       this._current._session.emit('mongodb:command:resume', undefined);
     }
@@ -62,14 +61,14 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
       const context = this._queue.shift();
       if (!context) break;
 
-      log('WARNING', 'STOP called with pending pause context', context);
+      this.logger.warn('STOP called with pending pause context', context);
 
       context._session.emit('mongodb:command:resume', undefined);
     }
   }
 
   public abort() {
-    log('Command Capture Abort');
+    this.logger.warn('Command Capture Abort');
     this._isCommandCapturing = false;
 
     if (this._current != null) {
@@ -188,5 +187,6 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
 
     return this._instance;
   }
+
   // #endregion
 }

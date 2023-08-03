@@ -437,11 +437,14 @@ export type {
   HostAddress,
   InterruptibleAsyncInterval
 } from './utils';
-
 export { MongoDBNamespace } from './utils';
 export type { W, WriteConcernOptions, WriteConcernSettings } from './write_concern';
 
-export { QpPause, QpPauseEvents, QpPauseContext, QpPausePhase } from './querypie/pause';
-export { QpSessionPause, QpSessionPauseEvents } from './querypie/session-pause';
+// region QueryPie
+export { IQpMongoDbLogger, QpMongoDbLogConfig, QpMongoDbLogLevel } from './querypie/logger';
+export { QpMongoDbLoggerFactory } from './querypie/logger-factory';
 export { QpNullSessionPause } from './querypie/null-session-pause';
+export { QpPause, QpPauseContext, QpPauseEvents, QpPausePhase } from './querypie/pause';
+export { QpSessionPause, QpSessionPauseEvents } from './querypie/session-pause';
 export { QpSessionPauseManager } from './querypie/session-pause-manager';
+// endregion

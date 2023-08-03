@@ -1,6 +1,6 @@
 import type { Document } from 'bson';
+
 import type { Query, WriteProtocolMessageType } from '../cmap/commands';
-import type { CommandOperationOptions } from '../operations/command';
 import { QpPause, QpPausePhase } from './pause';
 import { QpSessionPause } from './session-pause';
 
@@ -8,7 +8,7 @@ import { QpSessionPause } from './session-pause';
 export class QpNullSessionPause extends QpSessionPause {
   private static _instance: QpNullSessionPause | undefined;
   public static get instance(): QpNullSessionPause {
-    if (this._instance === undefined) {
+    if (!this._instance) {
       this._instance = new QpNullSessionPause();
     }
 
@@ -16,7 +16,7 @@ export class QpNullSessionPause extends QpSessionPause {
   }
 
   private constructor() {
-    super('<NULL>');
+    super('NULL');
   }
 
   /** @internal */
@@ -26,7 +26,7 @@ export class QpNullSessionPause extends QpSessionPause {
     command: WriteProtocolMessageType,
     commandOptions: { [key: string]: any },
     result: Document | undefined,
-    callback: (err: any | undefined, result: Document | undefined) => void,
+    callback: (err: any | undefined, result: Document | undefined) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
       callback(undefined, result);
@@ -40,14 +40,14 @@ export class QpNullSessionPause extends QpSessionPause {
 
     // Case GetMore
     if ('cursorId' in command) {
-      this.log('<QueryPie Warning>', 'GetMore CALLED', command.ns, command.cursorId);
+      this.logger.warn('GetMore CALLED', command.ns, command.cursorId);
       callback(undefined, result);
       return;
     }
 
     // Case KillCursor
     if ('cursorIds' in command) {
-      this.log('<QueryPie Warning>', 'KillCursor CALLED', command.ns, command.cursorIds);
+      this.logger.warn('KillCursor CALLED', command.ns, command.cursorIds);
       callback(undefined, result);
       return;
     }
@@ -58,7 +58,7 @@ export class QpNullSessionPause extends QpSessionPause {
         return;
       }
 
-      this.log('<QueryPie Warning>', 'Query CALLED', command.ns, command.query);
+      this.logger.warn('Query CALLED', command.ns, command.query);
       callback(undefined, result);
       return;
     }
@@ -68,7 +68,7 @@ export class QpNullSessionPause extends QpSessionPause {
       return;
     }
 
-    this.log('<QueryPie Warning>', 'Unknown command detected', command);
+    this.logger.warn('Unknown command detected', command);
     callback(undefined, result);
 
     // throw new Error('Invalid command');
@@ -81,7 +81,7 @@ export class QpNullSessionPause extends QpSessionPause {
     command: Document,
     commandOptions: { [key: string]: any },
     result: Document | undefined,
-    callback: (err?: any) => void,
+    callback: (err?: any) => void
   ) {
     if (commandOptions[QpPause.kNoPause]) {
       callback();
@@ -98,7 +98,7 @@ export class QpNullSessionPause extends QpSessionPause {
       return;
     }
 
-    this.log('<QueryPie Warning>', 'Unknown command detected', command);
+    this.logger.warn('Unknown command detected', command);
     callback();
   }
 }
@@ -114,18 +114,16 @@ const emptyIgnorables: Set<string> = new Set([
   'copydbsaslstart',
   'copydb',
   'ismaster',
-  'ping',
+  'ping'
 ]);
 
 const isCommandIgnorableInEmptyBus = (command: Document): boolean => {
   const keys = Object.keys(command);
-  if (keys.length === 0)
-    return false;
+  if (keys.length === 0) return false;
 
   const firstKey = keys[0];
 
-  if (!emptyIgnorables.has(firstKey))
-    return false;
+  if (!emptyIgnorables.has(firstKey)) return false;
 
   return Boolean(command[firstKey]);
 };
