@@ -114,7 +114,8 @@ const emptyIgnorables: Set<string> = new Set([
   'copydbsaslstart',
   'copydb',
   'ismaster',
-  'ping'
+  'ping',
+  'hello'
 ]);
 
 const isCommandIgnorableInEmptyBus = (command: Document): boolean => {
