@@ -16,8 +16,8 @@ const log = (...args: any[]) => {
   console.log('<QpSessionPause>', ...args);
 };
 
-// const ignorables = ['ping', 'buildInfo', 'listDatabases'];
-const ignorables: string[] = [];
+const ignorables = ['ping'];
+
 const isCommandIgnorable = (command: Document) => {
   for (const ignorable of ignorables) {
     if (command[ignorable] === 1) return true;
