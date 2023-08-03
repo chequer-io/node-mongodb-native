@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "bson": "^4.6.1",
-    "denque": "^2.0.1",
+    "denque": "^2.1.0",
     "mongodb-connection-string-url": "^2.4.1",
     "socks": "^2.6.1"
   },
