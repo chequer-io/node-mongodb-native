@@ -26,7 +26,7 @@ export class QpNullSessionPause extends QpSessionPause {
     command: WriteProtocolMessageType,
     commandOptions: { [key: string]: any },
     result: Document | undefined,
-    callback: (err: any | undefined, result: Document | undefined) => void
+    callback: (err: any | undefined, result: Document | undefined) => void,
   ) {
     if (commandOptions[QpPause.kNoPause]) {
       callback(undefined, result);
@@ -69,6 +69,7 @@ export class QpNullSessionPause extends QpSessionPause {
     }
 
     this.log('<QueryPie Warning>', 'Unknown command detected', command);
+    callback(undefined, result);
 
     // throw new Error('Invalid command');
   }
@@ -80,7 +81,7 @@ export class QpNullSessionPause extends QpSessionPause {
     command: Document,
     commandOptions: { [key: string]: any },
     result: Document | undefined,
-    callback: (err?: any) => void
+    callback: (err?: any) => void,
   ) {
     if (commandOptions[QpPause.kNoPause]) {
       callback();
@@ -98,10 +99,11 @@ export class QpNullSessionPause extends QpSessionPause {
     }
 
     this.log('<QueryPie Warning>', 'Unknown command detected', command);
+    callback();
   }
 }
 
-const emptyIgnorables: string[] = [
+const emptyIgnorables: Set<string> = new Set([
   'saslStart',
   'authenticate',
   'saslContinue',
@@ -111,22 +113,23 @@ const emptyIgnorables: string[] = [
   'copydbgetnonce',
   'copydbsaslstart',
   'copydb',
-  'ismaster'
-];
-const isCommandIgnorableInEmptyBus = (command: Document): boolean => {
-  for (const ignorable of emptyIgnorables) {
-    if (command[ignorable] === 1) {
-      return true;
-    }
-  }
+  'ismaster',
+  'ping',
+]);
 
-  return false;
+const isCommandIgnorableInEmptyBus = (command: Document): boolean => {
+  const keys = Object.keys(command);
+  if (keys.length === 0)
+    return false;
+
+  const firstKey = keys[0];
+
+  if (!emptyIgnorables.has(firstKey))
+    return false;
+
+  return Boolean(command[firstKey]);
 };
 
 const isQueryIgnorable = (command: Query): boolean => {
-  if (command.query.ismaster === true) {
-    return true;
-  }
-
-  return false;
+  return Boolean(command.query.ismaster);
 };
