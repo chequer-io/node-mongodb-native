@@ -73,7 +73,7 @@ export interface FindOptions<TSchema extends Document = Document> extends Comman
 
 const SUPPORTS_WRITE_CONCERN_AND_COLLATION = 5;
 
-/** @internal */
+/** @public */
 export class FindOperation extends CommandOperation<Document> {
   options: FindOptions;
   filter: Document;

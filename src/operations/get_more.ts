@@ -18,7 +18,7 @@ export interface GetMoreOptions extends OperationOptions {
   maxTimeMS?: number;
 }
 
-/** @internal */
+/** @public */
 export class GetMoreOperation extends AbstractOperation {
   cursorId: Long;
   options: GetMoreOptions;
