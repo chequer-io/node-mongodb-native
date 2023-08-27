@@ -138,6 +138,14 @@ export {
 } from './sdam/events';
 export { SrvPollingEvent } from './sdam/srv_polling';
 
+// QUERYPIE EXPORT START
+
+export { executeOperation } from './operations/execute_operation';
+export { FindOperation } from './operations/find';
+export { GetMoreOperation } from './operations/get_more';
+
+// QUERYPIE EXPORT END
+
 // type only exports below, these are removed from emitted JS
 export type { AdminPrivate } from './admin';
 export type { BSONSerializeOptions, Document } from './bson';
