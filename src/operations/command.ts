@@ -70,7 +70,7 @@ export interface OperationParent {
   bsonOptions?: BSONSerializeOptions;
 }
 
-/** @internal */
+/** @public */
 export abstract class CommandOperation<T> extends AbstractOperation<T> {
   options: CommandOperationOptions;
   ns: MongoDBNamespace;

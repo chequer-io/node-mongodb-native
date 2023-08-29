@@ -43,7 +43,7 @@ const kSession = Symbol('session');
  * as well as setting and getting a session.
  * Additionally, this class implements `hasAspect`, which determines whether an operation has
  * a specific aspect.
- * @internal
+ * @public
  */
 export abstract class AbstractOperation<TResult = any> {
   ns!: MongoDBNamespace;

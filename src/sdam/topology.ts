@@ -190,7 +190,7 @@ export type TopologyEvents = {
   EventEmitterWithState;
 /**
  * A container of server instances representing a connection to a MongoDB topology.
- * @internal
+ * @public
  */
 export class Topology extends TypedEventEmitter<TopologyEvents> {
   /** @internal */

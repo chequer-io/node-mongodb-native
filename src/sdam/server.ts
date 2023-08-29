@@ -113,7 +113,7 @@ export type ServerEvents = {
 } & ConnectionPoolEvents &
   EventEmitterWithState;
 
-/** @internal */
+/** @public */
 export class Server extends TypedEventEmitter<ServerEvents> {
   /** @internal */
   s: ServerPrivate;
