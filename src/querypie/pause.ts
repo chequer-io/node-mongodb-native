@@ -17,7 +17,7 @@ export type QpPausePhase = 'pre' | 'post';
 /** @public */
 export type QpPauseContext = {
   id: string;
-  sessionId: string;
+  pauseId: string;
   command: Document;
   result: Document | undefined;
   phase: QpPausePhase;
@@ -154,7 +154,7 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
 
   /** @internal */
   public pause(
-    session: QpSessionPause,
+    pause: QpSessionPause,
     id: string,
     phase: QpPausePhase,
     command: Document,
@@ -162,9 +162,9 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
   ): void {
     this._queue.push({
       id,
-      sessionId: session.id,
+      pauseId: pause.id,
 
-      _session: session,
+      _session: pause,
       phase,
       command,
       result

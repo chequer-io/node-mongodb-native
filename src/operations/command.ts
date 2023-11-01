@@ -1,6 +1,4 @@
 import type { BSONSerializeOptions, Document } from '../bson';
-import { QpPause } from '../querypie/pause';
-import { QpSessionPause } from '../querypie/session-pause';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
 import { Explain, ExplainOptions } from '../explain';
 import type { Logger } from '../logger';
@@ -19,8 +17,6 @@ import {
 import { WriteConcern, WriteConcernOptions } from '../write_concern';
 import type { ReadConcernLike } from './../read_concern';
 import { AbstractOperation, Aspect, OperationOptions } from './operation';
-import { UUID } from 'bson';
-import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 const SUPPORTS_WRITE_CONCERN_AND_COLLATION = 5;
 

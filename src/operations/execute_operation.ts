@@ -26,7 +26,8 @@ const MMAPv1_RETRY_WRITES_ERROR_CODE = MONGODB_ERROR_CODES.IllegalOperation;
 const MMAPv1_RETRY_WRITES_ERROR_MESSAGE =
   'This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string.';
 
-type ResultTypeFromOperation<TOperation> = TOperation extends AbstractOperation<infer K>
+/** @internal */
+export type ResultTypeFromOperation<TOperation> = TOperation extends AbstractOperation<infer K>
   ? K
   : never;
 
@@ -42,7 +43,6 @@ export interface ExecutionResult {
 
 /**
  * Executes the given operation with provided arguments.
- * @internal
  *
  * @remarks
  * This method reduces large amounts of duplication in the entire codebase by providing
@@ -55,18 +55,22 @@ export interface ExecutionResult {
  * @param operation - The operation to execute
  * @param callback - The command result callback
  */
+/** @public */
 export function executeOperation<
   T extends AbstractOperation<TResult>,
   TResult = ResultTypeFromOperation<T>
 >(topology: Topology, operation: T): Promise<TResult>;
+/** @public */
 export function executeOperation<
   T extends AbstractOperation<TResult>,
   TResult = ResultTypeFromOperation<T>
 >(topology: Topology, operation: T, callback: Callback<TResult>): void;
+/** @public */
 export function executeOperation<
   T extends AbstractOperation<TResult>,
   TResult = ResultTypeFromOperation<T>
 >(topology: Topology, operation: T, callback?: Callback<TResult>): Promise<TResult> | void;
+/** @public */
 export function executeOperation<
   T extends AbstractOperation<TResult>,
   TResult = ResultTypeFromOperation<T>

@@ -441,14 +441,12 @@ export { MongoDBNamespace } from './utils';
 export type { W, WriteConcernOptions, WriteConcernSettings } from './write_concern';
 
 // region QueryPie
-export { IQpMongoDbLogger, QpMongoDbLogConfig, QpMongoDbLogLevel } from './querypie/logger';
-export { QpMongoDbLoggerFactory } from './querypie/logger-factory';
-export { QpNullSessionPause } from './querypie/null-session-pause';
-export { QpPause, QpPauseContext, QpPauseEvents, QpPausePhase } from './querypie/pause';
-export { QpSessionPause, QpSessionPauseEvents } from './querypie/session-pause';
-export { QpSessionPauseManager } from './querypie/session-pause-manager';
-
+export { ResultTypeFromOperation } from './operations/execute_operation';
 export { executeOperation } from './operations/execute_operation';
 export { FindOperation } from './operations/find';
-export { GetMoreOperation } from './operations/get_more';
+export { GetMoreOperation, GetMoreOptions as GetMoreOperationOptions } from './operations/get_more';
+export { IQpMongoDbLogger, QpMongoDbLogConfig, QpMongoDbLogLevel } from './querypie/logger';
+export { QpMongoDbLoggerFactory } from './querypie/logger-factory';
+export { QpPause, QpPauseContext, QpPauseEvents, QpPausePhase } from './querypie/pause';
+export { QpSessionPause, QpSessionPauseEvents } from './querypie/session-pause';
 // endregion

@@ -1,8 +1,7 @@
 import type { Document } from 'bson';
 
-import type { WriteProtocolMessageType } from '../cmap/commands';
+import type { Msg, Query, WriteProtocolMessageType } from '../cmap/commands';
 import { TypedEventEmitter } from '../mongo_types';
-import type { ClientSession, ServerSessionId } from '../sessions';
 import type { IQpMongoDbLogger } from './logger';
 import { QpMongoDbLoggerFactory } from './logger-factory';
 import { QpPause, QpPausePhase } from './pause';
@@ -11,16 +10,6 @@ import { QpPause, QpPausePhase } from './pause';
 export type QpSessionPauseEvents = {
   'mongodb:command:resume': (updatedResult: Document | undefined) => void;
   'mongodb:command:abort': () => void;
-};
-
-const ignorables = ['ping'];
-
-const isCommandIgnorable = (command: Document) => {
-  for (const ignorable of ignorables) {
-    if (command[ignorable] === 1) return true;
-  }
-
-  return false;
 };
 
 /** @internal */
@@ -37,92 +26,76 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
 
   /** @internal */
   public waitOnProtocol(
-    id: string,
     phase: QpPausePhase,
     command: WriteProtocolMessageType,
     commandOptions: { [key: string]: any },
     result: Document | undefined,
     callback: (err: any | undefined, result: Document | undefined) => void
   ) {
+    const logger = this.logger.scope(phase);
+    logger.debug('command', command);
+    logger.debug('options', commandOptions);
+
     if (commandOptions[QpPause.kNoPause]) {
+      logger.debug('PASS', 'kNoPause: true');
       callback(undefined, result);
       return;
     }
 
     if (!QpPause.instance.isCommandCapturing) {
+      logger.debug('PASS', 'Command is not capturing');
       callback(undefined, result);
       return;
     }
 
     // Case GetMore
     if ('cursorId' in command) {
-      this.logger.warn('GetMore CALLED');
+      logger.warn('PASS', 'GetMore CALLED');
       callback(undefined, result);
       return;
     }
 
     // Case KillCursor
     if ('cursorIds' in command) {
-      this.logger.warn('KillCursor CALLED');
+      logger.warn('PASS', 'KillCursor CALLED');
       callback(undefined, result);
       return;
     }
 
     // Case Query
     if ('query' in command) {
-      this.logger.warn('Query CALLED');
+      if (isAllowedQuery(command)) {
+        logger.debug('PASS', 'Allowed Query');
+        callback(undefined, result);
+        return;
+      }
+
+      logger.warn('PASS', 'Query CALLED');
       callback(undefined, result);
       return;
     }
 
     // Case Msg
     if ('command' in command) {
-      if (isCommandIgnorable(command)) {
-        this.logger.warn('PASSED', 'Command is ignorable');
+      if (isAllowedMsg(command)) {
+        logger.debug('PASS', 'Allowed Msg');
         callback(undefined, result);
         return;
       }
 
-      QpPause.instance.pause(this, id, phase, command.command, result);
-      this.logger.debug('Pause', command.command, phase);
-      this.waitInternal(result, callback);
+      logger.debug('PAUSE');
+
+      QpPause.instance.pause(this, this.id, phase, command.command, result);
+      this.waitInternal(logger, result, callback);
+
       return;
     }
 
     throw new Error('Invalid protocol');
   }
 
-  /** @internal */
-  public waitOnCommand(
-    id: string,
-    phase: QpPausePhase,
-    command: Document,
-    commandOptions: { [key: string]: any },
-    result: Document | undefined,
-    callback: (err?: any) => void
-  ) {
-    if (commandOptions[QpPause.kNoPause]) {
-      callback();
-      return;
-    }
-
-    if (!QpPause.instance.isCommandCapturing) {
-      callback();
-      return;
-    }
-
-    if (isCommandIgnorable(command)) {
-      callback();
-      return;
-    }
-
-    QpPause.instance.pause(this, id, phase, command, result);
-    this.logger.debug('Pause', command, phase);
-
-    this.waitInternal(result, callback);
-  }
-
   private waitInternal(
+    logger: IQpMongoDbLogger,
     originalResult: Document | undefined,
     _callback: (err: any | undefined, updatedResult: Document | undefined) => void
   ) {
@@ -130,8 +103,9 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
 
     const callback = (log: string, err?: any, updatedResult?: Document | undefined): void => {
       if (isCallbackCalled) return;
-      this.logger.debug(log);
       isCallbackCalled = true;
+
+      logger.debug(log);
 
       this.off('mongodb:command:resume', onResume);
       this.off('mongodb:command:abort', onAbort);
@@ -144,52 +118,47 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     };
 
     const onAbort = () => {
-      callback('Command abort', new Error('[QPE] Command aborted'));
+      callback('Abort', new Error('[QPE] Command aborted'));
     };
 
     this.once('mongodb:command:resume', onResume);
     this.once('mongodb:command:abort', onAbort);
   }
-
-  // protected log(...args: any[]) {
-  //   this.logger.
-  //   log(`#${this.id}`, ...args);
-  // }
-
-  //#region Singleton
-  private static readonly _sessionInstances: {
-    [sessionId: string]: QpSessionPause | undefined;
-  } = {};
-
-  /** @internal */
-  public static createOrGet(
-    sessionId: string | ClientSession | ServerSessionId | undefined
-  ): QpSessionPause | null {
-    if (!sessionId) {
-      return null;
-    }
-
-    // Case string(sessionId)
-    if (typeof sessionId === 'string') {
-      const instance = this._sessionInstances[sessionId];
-      if (instance) {
-        return instance;
-      }
-
-      const newInstance = new QpSessionPause(sessionId);
-      this._sessionInstances[sessionId] = newInstance;
-
-      return newInstance;
-    }
-
-    // Case ClientSession
-    if ('topology' in sessionId) {
-      return this.createOrGet(sessionId.id);
-    }
-
-    // Case ServerSessionId
-    return this.createOrGet(sessionId.id.toUUID().toHexString());
-  }
-
-  //#endregion
 }
+
+const allowedQueries: Set<string> = new Set(['ismaster']);
+
+const isAllowedQuery = (query: Query): boolean => {
+  const keys = Object.keys(query.query);
+  if (keys.length === 0) return false;
+
+  const firstKey = keys[0];
+  if (!allowedQueries.has(firstKey)) return false;
+
+  return Boolean(query.query[firstKey]);
+};
+
+const allowedMsgs: Set<string> = new Set([
+  'saslStart',
+  'authenticate',
+  'saslContinue',
+  'getnonce',
+  'createUser',
+  'updateUser',
+  'copydbgetnonce',
+  'copydbsaslstart',
+  'copydb',
+  'ismaster',
+  'ping',
+  'hello'
+]);
+
+const isAllowedMsg = (msg: Msg): boolean => {
+  const keys = Object.keys(msg.command);
+  if (keys.length === 0) return false;
+
+  const firstKey = keys[0];
+  if (!allowedMsgs.has(firstKey)) return false;
+
+  return Boolean(msg.command[firstKey]);
+};

@@ -1,3 +1,5 @@
+import { UUID } from 'bson';
+
 import { BSONSerializeOptions, Document, Long, ObjectId, pluckBSONSerializeOptions } from '../bson';
 import {
   CLOSE,
@@ -21,6 +23,7 @@ import {
 } from '../error';
 import type { ServerApi, SupportedNodeConnectionOptions } from '../mongo_client';
 import { CancellationToken, TypedEventEmitter } from '../mongo_types';
+import { QpSessionPause } from '../querypie/session-pause';
 import { ReadPreference, ReadPreferenceLike } from '../read_preference';
 import { applySession, ClientSession, updateSessionFromResponse } from '../sessions';
 import {
@@ -54,8 +57,6 @@ import type { Stream } from './connect';
 import { MessageStream, OperationDescription } from './message_stream';
 import { StreamDescription, StreamDescriptionOptions } from './stream_description';
 import { applyCommonQueryOptions, getReadPreference, isSharded } from './wire_protocol/shared';
-import { UUID } from 'bson';
-import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 /** @internal */
 const kStream = Symbol('stream');
@@ -204,6 +205,7 @@ export class Connection extends TypedEventEmitter<ConnectionEvents> {
   [kStream]: Stream;
   /** @internal */
   [kHello]: Document;
+  // @ts-ignore
   /** @internal */
   [kClusterTime]: Document;
 
@@ -880,12 +882,12 @@ function write(
   // OLD END
 
   // QP BEGIN
-  const pause = QpSessionPauseManager.createOrGet(options.session);
   const id = new UUID().toHexString();
+  const pause = new QpSessionPause(id);
 
   const originalCallback = operationDescription.cb;
 
-  pause.waitOnProtocol(id, 'pre', command, options, undefined, errPre => {
+  pause.waitOnProtocol('pre', command, options, undefined, errPre => {
     if (errPre) {
       originalCallback(errPre);
       return;
@@ -897,7 +899,7 @@ function write(
         return;
       }
 
-      pause.waitOnProtocol(id, 'post', command, options, result, (errPost, updatedResult) => {
+      pause.waitOnProtocol('post', command, options, result, (errPost, updatedResult) => {
         if (errPost) {
           originalCallback(errPost);
           return;

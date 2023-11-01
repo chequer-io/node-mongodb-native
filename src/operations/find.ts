@@ -1,5 +1,4 @@
 import type { Document } from '../bson';
-import { QpSessionPause } from '../querypie/session-pause';
 import { isSharded } from '../cmap/wire_protocol/shared';
 import type { Collection } from '../collection';
 import { MongoCompatibilityError, MongoInvalidArgumentError } from '../error';
@@ -16,8 +15,6 @@ import {
 } from '../utils';
 import { CollationOptions, CommandOperation, CommandOperationOptions } from './command';
 import { Aspect, defineAspects, Hint } from './operation';
-import { UUID } from 'bson';
-import { QpSessionPauseManager } from '../querypie/session-pause-manager';
 
 /**
  * @public
