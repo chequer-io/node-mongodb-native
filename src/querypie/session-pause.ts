@@ -85,7 +85,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
 
       logger.debug('PAUSE');
 
-      QpPause.instance.pause(this, this.id, phase, command.command, result);
+      QpPause.instance.pause(this, phase, command.command, result);
       this.waitInternal(logger, result, callback);
 
       return;
