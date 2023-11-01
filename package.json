@@ -1,6 +1,6 @@
 {
   "name": "qp-mongodb",
-  "version": "0.0.0-dev.25",
+  "version": "0.0.0-dev.26",
   "description": "The official MongoDB driver for Node.js",
   "main": "lib/index.js",
   "files": [
