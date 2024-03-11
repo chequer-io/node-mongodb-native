@@ -33,17 +33,17 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     callback: (err: any | undefined, result: Document | undefined) => void
   ) {
     const logger = this.logger.scope(phase);
-    logger.debug('command', command);
-    logger.debug('options', commandOptions);
+    logger.verbose('command', command);
+    logger.verbose('options', commandOptions);
 
     if (commandOptions[QpPause.kNoPause]) {
-      logger.debug('PASS', 'kNoPause: true');
+      logger.verbose('PASS', 'kNoPause: true');
       callback(undefined, result);
       return;
     }
 
     if (!QpPause.instance.isCommandCapturing) {
-      logger.debug('PASS', 'Command is not capturing');
+      logger.verbose('PASS', 'Command is not capturing');
       callback(undefined, result);
       return;
     }
@@ -65,7 +65,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     // Case Query
     if ('query' in command) {
       if (isAllowedQuery(command)) {
-        logger.debug('PASS', 'Allowed Query');
+        logger.verbose('PASS', 'Allowed Query');
         callback(undefined, result);
         return;
       }
@@ -78,7 +78,7 @@ export class QpSessionPause extends TypedEventEmitter<QpSessionPauseEvents> {
     // Case Msg
     if ('command' in command) {
       if (isAllowedMsg(command)) {
-        logger.debug('PASS', 'Allowed Msg');
+        logger.verbose('PASS', 'Allowed Msg');
         callback(undefined, result);
         return;
       }

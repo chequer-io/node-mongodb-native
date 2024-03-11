@@ -50,7 +50,8 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
     this._isCommandCapturing = false;
 
     if (this._current != null) {
-      this.logger.warn('STOP called with current pause context', this._current);
+      this.logger.warn('STOP called with current pause context');
+      this.logger.verbose(this._current);
 
       this._current._session.emit('mongodb:command:resume', undefined);
     }
@@ -60,7 +61,8 @@ export class QpPause extends TypedEventEmitter<QpPauseEvents> {
       const context = this._queue.shift();
       if (!context) break;
 
-      this.logger.warn('STOP called with pending pause context', context);
+      this.logger.warn('STOP called with pending pause context');
+      this.logger.verbose(context);
 
       context._session.emit('mongodb:command:resume', undefined);
     }
